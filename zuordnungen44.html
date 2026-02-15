@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch: Semantik & Kontext (Responsiv)</title>
+    <!-- Polyfill für Touch-Geräte -->
+    <script src="https://cdn.jsdelivr.net/npm/drag-drop-touch@1.3.1/DragDropTouch.js"></script>
+    <style>
+        :root {
+            --primary: #3f51b5;
+            --primary-light: #e8eaf6;
+            --success: #4caf50;
+            --success-bg: #e8f5e9;
+            --error: #f44336;
+            --error-bg: #ffebee;
+            --text: #333;
+            --border: #ddd;
+            --bg-page: #f4f6f8;
+            --surface: #ffffff;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            margin: 0;
+            padding: 15px;
+            background-color: var(--bg-page);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        p.intro {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        /* --- Task Card Styles --- */
+        .task-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 40px;
+            position: relative; /* Für Feedback Positionierung */
+        }
+
+        .task-header {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-light);
+        }
+
+        /* --- Drag & Drop Pools --- */
+        .source-container {
+            background-color: var(--primary-light);
+            padding: 15px;
+            border-radius: 8px;
+            min-height: 60px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+            border: 2px dashed #c5cae9;
+        }
+
+        .draggable {
+            background: white;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 6px 14px;
+            border-radius: 30px;
+            cursor: grab;
+            font-weight: 600;
+            user-select: none;
+            touch-action: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 0.95rem;
+            transition: transform 0.1s, box-shadow 0.1s;
+            white-space: nowrap;
+        }
+
+        .draggable:active {
+            cursor: grabbing;
+            transform: scale(1.05);
+        }
+
+        /* Feedback States Item */
+        .draggable.correct-match { background-color: var(--success); color: white; border-color: var(--success); }
+        .draggable.incorrect-match { background-color: var(--error); color: white; border-color: var(--error); }
+
+        /* --- Matching Grid (Task 1 & 2) --- */
+        .matching-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .match-row {
+            display: flex;
+            flex-direction: column;
+            background: #fafafa;
+            border-radius: 6px;
+            padding: 10px;
+            border: 1px solid #eee;
+            gap: 10px;
+        }
+
+        .definition-text {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+        
+        .definition-text::before {
+            content: "➤";
+            margin-right: 8px;
+            color: #999;
+        }
+
+        /* --- Sentence Gap Styles (Task 3) --- */
+        .sentence-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .sentence-item {
+            background: #fafafa;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 4px solid var(--primary-light);
+            font-size: 1.05rem;
+            line-height: 2; /* Mehr Platz für Dropzone */
+        }
+
+        /* Dropzones */
+        .dropzone {
+            min-height: 40px;
+            background: white;
+            border: 2px dashed #ccc;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, border-color 0.2s;
+            margin-top: 5px; /* Mobile spacing */
+        }
+
+        /* Inline Dropzone für Task 3 */
+        .dropzone.inline-zone {
+            display: inline-flex;
+            min-width: 120px;
+            height: 38px;
+            margin: 0 5px;
+            vertical-align: middle;
+            transform: translateY(-2px);
+        }
+
+        .dropzone.drag-over { background-color: #e3f2fd; border-color: var(--primary); }
+        .dropzone.correct { border-color: var(--success); background-color: var(--success-bg); border-style: solid; }
+        .dropzone.incorrect { border-color: var(--error); background-color: var(--error-bg); border-style: solid; }
+
+        /* --- Responsive Breakpoint (Tablet/Desktop) --- */
+        @media (min-width: 600px) {
+            .matching-grid { grid-template-columns: 1fr 1fr; }
+            .match-row { flex-direction: row; align-items: center; justify-content: space-between; gap: 0; }
+            .dropzone:not(.inline-zone) { width: 160px; flex-shrink: 0; margin-top: 0; }
+            .definition-text { margin-right: 10px; flex: 1; }
+        }
+
+        /* --- Controls --- */
+        .controls {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px dashed var(--border);
+        }
+
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        .btn-reset { background-color: #90a4ae; color: white; }
+        .btn-reset:hover { background-color: #78909c; }
+
+        .btn-solve { background-color: #ff9800; color: white; }
+        .btn-solve:hover { background-color: #f57c00; }
+
+        .feedback-msg {
+            text-align: right;
+            font-weight: bold;
+            min-height: 24px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        .text-success { color: #2e7d32; }
+        .text-error { color: #c62828; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Verben auf -давать</h1>
+    <p class="intro">Ziehen Sie die russischen Verben in die passenden Felder.</p>
+
+    <!-- Aufgabe 1: Deutsch -> Russisch -->
+    <div class="task-card" id="task1">
+        <div class="task-header">Aufgabe 1: Übersetzung</div>
+        
+        <div class="source-container shuffle-me">
+            <div class="draggable" draggable="true" data-id="verkaufen">продавать</div>
+            <div class="draggable" draggable="true" data-id="abgeben">сдавать</div>
+            <div class="draggable" draggable="true" data-id="zurückgeben">отдавать</div>
+            <div class="draggable" draggable="true" data-id="aufgeben">задавать</div>
+            <div class="draggable" draggable="true" data-id="verraten">предавать</div>
+            <div class="draggable" draggable="true" data-id="servieren">подавать</div>
+        </div>
+
+        <div class="matching-grid">
+            <div class="match-row">
+                <span class="definition-text">verkaufen</span>
+                <div class="dropzone" data-match="verkaufen"></div>
+            </div>
+            <div class="match-row">
+                <span class="definition-text">zurückgeben</span>
+                <div class="dropzone" data-match="zurückgeben"></div>
+            </div>
+            <div class="match-row">
+                <span class="definition-text">verraten (Geheimnis)</span>
+                <div class="dropzone" data-match="verraten"></div>
+            </div>
+            <div class="match-row">
+                <span class="definition-text">aufgeben (Hausaufgabe) / stellen (Frage)</span>
+                <div class="dropzone" data-match="aufgeben"></div>
+            </div>
+            <div class="match-row">
+                <span class="definition-text">abgeben (Prüfung)</span>
+                <div class="dropzone" data-match="abgeben"></div>
+            </div>
+            <div class="match-row">
+                <span class="definition-text">servieren / reichen</span>
+                <div class="dropzone" data-match="servieren"></div>
+            </div>
+        </div>
+
+        <div class="feedback-msg"></div>
+        <div class="controls">
+            <button class="btn-reset" onclick="resetTask('task1')">Zurücksetzen</button>
+            <button class="btn-solve" onclick="solveTask('task1')">Lösung anzeigen</button>
+        </div>
+    </div>
+
+    <!-- Aufgabe 2: Synonyme / Kontext -->
+    <div class="task-card" id="task2">
+        <div class="task-header">Aufgabe 2: Synonyme (Ohne Tastatur)</div>
+        <p style="margin-top:0; color:#555; font-size:0.9rem;">Was bedeutet das russische Verb?</p>
+        
+        <div class="source-container shuffle-me">
+            <div class="draggable" draggable="true" data-id="buch">сдать</div>
+            <div class="draggable" draggable="true" data-id="gruesse">передать</div>
+            <div class="draggable" draggable="true" data-id="geheimnis">выдать</div>
+            <div class="draggable" draggable="true" data-id="gott">создать</div>
+        </div>
+
+        <div class="matching-grid">
+            <div class="match-row">
+                <span class="definition-text">вернуть книгу в библиотеку (Buch zurück)</span>
+                <div class="dropzone" data-match="buch"></div>
+            </div>
+            <div class="match-row">
+                <span class="definition-text">сказать "привет" от мамы (Grüße)</span>
+                <div class="dropzone" data-match="gruesse"></div>
+            </div>
+            <div class="match-row">
+                <span class="definition-text">открыть чужой секрет (Verraten)</span>
+                <div class="dropzone" data-match="geheimnis"></div>
+            </div>
+            <div class="match-row">
+                <span class="definition-text">сделать что-то новое / творить (Erschaffen)</span>
+                <div class="dropzone" data-match="gott"></div>
+            </div>
+        </div>
+
+        <div class="feedback-msg"></div>
+        <div class="controls">
+            <button class="btn-reset" onclick="resetTask('task2')">Zurücksetzen</button>
+            <button class="btn-solve" onclick="solveTask('task2')">Lösung anzeigen</button>
+        </div>
+    </div>
+
+    <!-- Aufgabe 3: Lückentext (Sätze) -->
+    <div class="task-card" id="task3">
+        <div class="task-header">Aufgabe 3: Sätze ergänzen</div>
+        <p style="margin-top:0; color:#555; font-size:0.9rem;">Ziehen Sie das Verb direkt in den Satz.</p>
+
+        <div class="source-container shuffle-me">
+            <div class="draggable" draggable="true" data-id="t3-exam">сдать</div>
+            <div class="draggable" draggable="true" data-id="t3-ask">задать</div>
+            <div class="draggable" draggable="true" data-id="t3-salt">передать</div>
+            <div class="draggable" draggable="true" data-id="t3-sell">продать</div>
+        </div>
+
+        <div class="sentence-list">
+            <div class="sentence-item">
+                1. Студент хочет <div class="dropzone inline-zone" data-match="t3-exam"></div> экзамен на отлично.
+                <br><small style="color:#888; font-style:italic;">(Der Student will die Prüfung mit Auszeichnung bestehen.)</small>
+            </div>
+            <div class="sentence-item">
+                2. Можно <div class="dropzone inline-zone" data-match="t3-ask"></div> тебе один вопрос?
+                <br><small style="color:#888; font-style:italic;">(Darf ich dir eine Frage stellen?)</small>
+            </div>
+            <div class="sentence-item">
+                3. Ты можешь <div class="dropzone inline-zone" data-match="t3-salt"></div> мне соль?
+                <br><small style="color:#888; font-style:italic;">(Kannst du mir das Salz reichen?)</small>
+            </div>
+            <div class="sentence-item">
+                4. Он хочет <div class="dropzone inline-zone" data-match="t3-sell"></div> свою старую машину.
+                <br><small style="color:#888; font-style:italic;">(Er will sein altes Auto verkaufen.)</small>
+            </div>
+        </div>
+
+        <div class="feedback-msg"></div>
+        <div class="controls">
+            <button class="btn-reset" onclick="resetTask('task3')">Zurücksetzen</button>
+            <button class="btn-solve" onclick="solveTask('task3')">Lösung anzeigen</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- Initialisierung ---
+    window.onload = function() {
+        shuffleAll();
+    };
+
+    function shuffleAll() {
+        document.querySelectorAll('.shuffle-me').forEach(container => {
+            shuffleChildren(container);
+        });
+    }
+
+    function shuffleChildren(element) {
+        for (let i = element.children.length; i >= 0; i--) {
+            element.appendChild(element.children[Math.random() * i | 0]);
+        }
+    }
+
+    // --- Drag & Drop Logik ---
+    let draggedItem = null;
+
+    document.querySelectorAll('.draggable').forEach(item => {
+        item.addEventListener('dragstart', function(e) {
+            draggedItem = this;
+            e.dataTransfer.effectAllowed = 'move';
+            this.style.opacity = '0.4';
+        });
+
+        item.addEventListener('dragend', function() {
+            draggedItem = null;
+            this.style.opacity = '1';
+        });
+    });
+
+    document.querySelectorAll('.dropzone').forEach(zone => {
+        zone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            zone.classList.add('drag-over');
+        });
+
+        zone.addEventListener('dragleave', function() {
+            zone.classList.remove('drag-over');
+        });
+
+        zone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            zone.classList.remove('drag-over');
+
+            if (!draggedItem) return;
+
+            // Wenn Zone voll, altes Item zurück in den Pool
+            if (zone.children.length > 0) {
+                const oldItem = zone.children[0];
+                const taskCard = zone.closest('.task-card');
+                const sourceContainer = taskCard.querySelector('.source-container');
+                
+                oldItem.classList.remove('correct-match', 'incorrect-match');
+                sourceContainer.appendChild(oldItem);
+            }
+
+            zone.appendChild(draggedItem);
+
+            // Sofortiges Feedback
+            checkMatch(zone, draggedItem);
+            updateTaskStatus(zone.closest('.task-card').id);
+        });
+    });
+
+    function checkMatch(zone, item) {
+        const requiredId = zone.getAttribute('data-match');
+        const itemId = item.getAttribute('data-id');
+
+        zone.classList.remove('correct', 'incorrect');
+        item.classList.remove('correct-match', 'incorrect-match');
+
+        if (requiredId === itemId) {
+            zone.classList.add('correct');
+            item.classList.add('correct-match');
+        } else {
+            zone.classList.add('incorrect');
+            item.classList.add('incorrect-match');
+        }
+    }
+
+    function updateTaskStatus(taskId) {
+        const task = document.getElementById(taskId);
+        const feedback = task.querySelector('.feedback-msg');
+        
+        const zones = task.querySelectorAll('.dropzone');
+        const correctZones = task.querySelectorAll('.dropzone.correct');
+        const incorrectZones = task.querySelectorAll('.dropzone.incorrect');
+
+        if (incorrectZones.length > 0) {
+            feedback.textContent = "Einige Antworten sind falsch.";
+            feedback.className = "feedback-msg text-error";
+        } else if (correctZones.length === zones.length) {
+            feedback.textContent = "Perfekt! Alles richtig.";
+            feedback.className = "feedback-msg text-success";
+        } else {
+            feedback.textContent = "";
+        }
+    }
+
+    // --- Reset & Solve ---
+    function resetTask(taskId) {
+        const task = document.getElementById(taskId);
+        const source = task.querySelector('.source-container');
+        const items = task.querySelectorAll('.draggable');
+        const zones = task.querySelectorAll('.dropzone');
+        const feedback = task.querySelector('.feedback-msg');
+
+        items.forEach(item => {
+            item.classList.remove('correct-match', 'incorrect-match');
+            source.appendChild(item);
+        });
+
+        zones.forEach(zone => zone.classList.remove('correct', 'incorrect'));
+        feedback.textContent = "";
+        shuffleChildren(source);
+    }
+
+    function solveTask(taskId) {
+        resetTask(taskId);
+        const task = document.getElementById(taskId);
+        const source = task.querySelector('.source-container');
+        const zones = task.querySelectorAll('.dropzone');
+        const feedback = task.querySelector('.feedback-msg');
+
+        zones.forEach(zone => {
+            const matchId = zone.getAttribute('data-match');
+            const item = source.querySelector(`.draggable[data-id="${matchId}"]`);
+            if (item) {
+                zone.appendChild(item);
+                zone.classList.add('correct');
+                item.classList.add('correct-match');
+            }
+        });
+
+        feedback.textContent = "Lösung angezeigt.";
+        feedback.className = "feedback-msg text-success";
+    }
+
+</script>
+
+</body>
+</html>
