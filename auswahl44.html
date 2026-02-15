@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Grammatik: Aspekte (NSV vs SV)</title>
+    <style>
+        :root {
+            --primary: #3f51b5;
+            --primary-light: #e8eaf6;
+            --success: #4caf50;
+            --success-bg: #e8f5e9;
+            --error: #f44336;
+            --error-bg: #ffebee;
+            --text: #333;
+            --text-light: #555;
+            --bg-page: #f4f6f8;
+            --surface: #ffffff;
+            --border: #ddd;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            margin: 0;
+            padding: 15px;
+            background-color: var(--bg-page);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--surface);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        p.intro {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 30px;
+        }
+
+        /* --- Task Styling --- */
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .task-item {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 5px solid var(--primary);
+        }
+
+        .sentence {
+            font-size: 1.15rem;
+            margin-bottom: 10px;
+        }
+
+        .signal-word {
+            font-weight: bold;
+            color: var(--primary);
+            text-decoration: underline;
+            text-decoration-thickness: 2px;
+            text-underline-offset: 3px;
+        }
+
+        .translation {
+            font-size: 0.9rem;
+            color: #777;
+            font-style: italic;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        /* Binary Choice Buttons */
+        .choice-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap; /* Wichtig für Mobile */
+        }
+
+        .choice-btn {
+            flex: 1; /* Buttons teilen sich den Platz */
+            min-width: 140px;
+            padding: 12px 15px;
+            border: 2px solid #ccc;
+            background: #fafafa;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .choice-btn:hover {
+            border-color: var(--primary);
+            background-color: var(--primary-light);
+        }
+
+        /* Feedback States */
+        .choice-btn.correct {
+            background-color: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .choice-btn.wrong {
+            background-color: var(--error);
+            color: white;
+            border-color: var(--error);
+            opacity: 0.6;
+        }
+
+        /* Disabled State after answer */
+        .task-item.answered .choice-btn {
+            pointer-events: none;
+        }
+
+        /* Explanation / Feedback Text */
+        .feedback-box {
+            margin-top: 15px;
+            padding: 12px;
+            background: var(--success-bg);
+            border-radius: 6px;
+            color: #2e7d32;
+            font-size: 0.95rem;
+            display: none;
+            border-left: 4px solid var(--success);
+        }
+        
+        .feedback-box.visible { display: block; }
+        
+        /* --- Controls --- */
+        .controls {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px dashed var(--border);
+        }
+
+        button.ctrl-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        .btn-reset { background-color: #90a4ae; color: white; }
+        .btn-reset:hover { background-color: #78909c; }
+
+        .btn-solve { background-color: #ff9800; color: white; }
+        .btn-solve:hover { background-color: #f57c00; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Aspekte: NSV oder SV?</h1>
+    <p class="intro">Wählen Sie den richtigen Aspekt. Achten Sie auf die <u>Signalwörter</u> (fett markiert).</p>
+
+    <div class="task-list">
+
+        <!-- Aufgabe 1 -->
+        <div class="task-item" id="task-1">
+            <div class="sentence">
+                Он <span class="signal-word">вчера</span> <span class="gap">...</span> мне книгу.
+            </div>
+            <span class="translation">(Er hat mir gestern das Buch gegeben.)</span>
+            
+            <div class="choice-container shuffle-me">
+                <button class="choice-btn" onclick="checkAnswer(this, false)">давал (NSV)</button>
+                <button class="choice-btn" onclick="checkAnswer(this, true, 'Signalwort <b>вчера</b> (gestern) -> Einmalige Handlung -> SV')">дал (SV)</button>
+            </div>
+            <div class="feedback-box"></div>
+        </div>
+
+        <!-- Aufgabe 2 -->
+        <div class="task-item" id="task-2">
+            <div class="sentence">
+                Бабушка <span class="signal-word">часто</span> <span class="gap">...</span> нам конфеты.
+            </div>
+            <span class="translation">(Oma hat uns oft Bonbons gegeben.)</span>
+
+            <div class="choice-container shuffle-me">
+                <button class="choice-btn" onclick="checkAnswer(this, true, 'Signalwort <b>часто</b> (oft) -> Wiederholung -> NSV')">давала (NSV)</button>
+                <button class="choice-btn" onclick="checkAnswer(this, false)">дала (SV)</button>
+            </div>
+            <div class="feedback-box"></div>
+        </div>
+
+        <!-- Aufgabe 3 -->
+        <div class="task-item" id="task-3">
+            <div class="sentence">
+                Студент наконец <span class="signal-word">успешно</span> <span class="gap">...</span> экзамен.
+            </div>
+            <span class="translation">(Der Student hat die Prüfung endlich erfolgreich bestanden.)</span>
+
+            <div class="choice-container shuffle-me">
+                <button class="choice-btn" onclick="checkAnswer(this, false)">сдавал (NSV)</button>
+                <button class="choice-btn" onclick="checkAnswer(this, true, 'Kontext <b>наконец / успешно</b> (endlich/erfolgreich) -> Resultat -> SV')">сдал (SV)</button>
+            </div>
+            <div class="feedback-box"></div>
+        </div>
+
+        <!-- Aufgabe 4 -->
+        <div class="task-item" id="task-4">
+            <div class="sentence">
+                Учитель <span class="signal-word">обычно</span> <span class="gap">...</span> трудные вопросы.
+            </div>
+            <span class="translation">(Der Lehrer stellt normalerweise schwierige Fragen.)</span>
+
+            <div class="choice-container shuffle-me">
+                <button class="choice-btn" onclick="checkAnswer(this, true, 'Signalwort <b>обычно</b> (gewöhnlich) -> Wiederholung -> NSV')">задаёт (NSV)</button>
+                <button class="choice-btn" onclick="checkAnswer(this, false)">задаст (SV)</button>
+            </div>
+            <div class="feedback-box"></div>
+        </div>
+
+        <!-- Aufgabe 5 -->
+        <div class="task-item" id="task-5">
+            <div class="sentence">
+                Мы <span class="signal-word">долго</span> <span class="gap">...</span> эту машину.
+            </div>
+            <span class="translation">(Wir haben dieses Auto lange verkauft.)</span>
+
+            <div class="choice-container shuffle-me">
+                <button class="choice-btn" onclick="checkAnswer(this, true, 'Signalwort <b>долго</b> (lange) -> Prozess/Dauer -> NSV')">продавали (NSV)</button>
+                <button class="choice-btn" onclick="checkAnswer(this, false)">продали (SV)</button>
+            </div>
+            <div class="feedback-box"></div>
+        </div>
+
+        <!-- Aufgabe 6 -->
+        <div class="task-item" id="task-6">
+            <div class="sentence">
+                Пожалуйста, <span class="signal-word">сейчас</span> <span class="gap">...</span> мне соль.
+            </div>
+            <span class="translation">(Bitte reich mir jetzt das Salz.)</span>
+
+            <div class="choice-container shuffle-me">
+                <button class="choice-btn" onclick="checkAnswer(this, false)">передавай (NSV)</button>
+                <button class="choice-btn" onclick="checkAnswer(this, true, 'Kontext: Einmalige Bitte (Imperativ) -> SV')">передай (SV)</button>
+            </div>
+            <div class="feedback-box"></div>
+        </div>
+
+        <!-- Aufgabe 7 (NEU) -->
+        <div class="task-item" id="task-7">
+            <div class="sentence">
+                Им <span class="signal-word">уже</span> <span class="gap">...</span> визы.
+            </div>
+            <span class="translation">(Man hat ihnen schon die Visa ausgestellt.)</span>
+
+            <div class="choice-container shuffle-me">
+                <button class="choice-btn" onclick="checkAnswer(this, false)">выдавали (NSV)</button>
+                <button class="choice-btn" onclick="checkAnswer(this, true, 'Signalwort <b>уже</b> (schon) -> Resultat erreicht -> SV')">выдали (SV)</button>
+            </div>
+            <div class="feedback-box"></div>
+        </div>
+
+        <!-- Aufgabe 8 (NEU) -->
+        <div class="task-item" id="task-8">
+            <div class="sentence">
+                Он <span class="signal-word">всегда</span> <span class="gap">...</span> долги вовремя.
+            </div>
+            <span class="translation">(Er gibt Schulden immer pünktlich zurück.)</span>
+
+            <div class="choice-container shuffle-me">
+                <button class="choice-btn" onclick="checkAnswer(this, true, 'Signalwort <b>всегда</b> (immer) -> Regelmäßigkeit -> NSV')">отдаёт (NSV)</button>
+                <button class="choice-btn" onclick="checkAnswer(this, false)">отдаст (SV)</button>
+            </div>
+            <div class="feedback-box"></div>
+        </div>
+
+        <!-- Aufgabe 9 (NEU) -->
+        <div class="task-item" id="task-9">
+            <div class="sentence">
+                Мы <span class="signal-word">каждое лето</span> <span class="gap">...</span> нашу дачу.
+            </div>
+            <span class="translation">(Wir vermieten jeden Sommer unsere Datscha.)</span>
+
+            <div class="choice-container shuffle-me">
+                <button class="choice-btn" onclick="checkAnswer(this, true, 'Signalwort <b>каждое лето</b> (jeden Sommer) -> Wiederholung -> NSV')">сдаём (NSV)</button>
+                <button class="choice-btn" onclick="checkAnswer(this, false)">сдадим (SV)</button>
+            </div>
+            <div class="feedback-box"></div>
+        </div>
+
+        <!-- Aufgabe 10 (NEU) -->
+        <div class="task-item" id="task-10">
+            <div class="sentence">
+                Ура, мы <span class="signal-word">наконец</span> <span class="gap">...</span> дом!
+            </div>
+            <span class="translation">(Hurra, wir haben endlich das Haus verkauft!)</span>
+
+            <div class="choice-container shuffle-me">
+                <button class="choice-btn" onclick="checkAnswer(this, false)">продавали (NSV)</button>
+                <button class="choice-btn" onclick="checkAnswer(this, true, 'Signalwort <b>наконец</b> (endlich) -> Erfolgreiches Resultat -> SV')">продали (SV)</button>
+            </div>
+            <div class="feedback-box"></div>
+        </div>
+
+    </div>
+
+    <div class="controls">
+        <button class="ctrl-btn btn-reset" onclick="resetAll()">Zurücksetzen</button>
+        <button class="ctrl-btn btn-solve" onclick="solveAll()">Lösung anzeigen</button>
+    </div>
+
+</div>
+
+<script>
+    function checkAnswer(btn, isCorrect, explanationText) {
+        const taskItem = btn.closest('.task-item');
+        
+        // Verhindern, dass man mehrmals klickt
+        if (taskItem.classList.contains('answered')) return;
+        taskItem.classList.add('answered');
+
+        const feedbackBox = taskItem.querySelector('.feedback-box');
+
+        if (isCorrect) {
+            btn.classList.add('correct');
+            // Zeige Erklärung
+            feedbackBox.innerHTML = "<strong>Richtig!</strong> " + (explanationText || "");
+            feedbackBox.classList.add('visible');
+        } else {
+            btn.classList.add('wrong');
+            // Zeige auch das Richtige an
+            const correctBtn = Array.from(taskItem.querySelectorAll('.choice-btn')).find(b => b.getAttribute('onclick').includes('true'));
+            if(correctBtn) correctBtn.classList.add('correct');
+            
+            feedbackBox.innerHTML = "<strong>Leider falsch.</strong> " + (explanationText ? "<br>Erklärung: " + explanationText : "");
+            feedbackBox.style.background = "#ffebee";
+            feedbackBox.style.color = "#c62828";
+            feedbackBox.style.borderLeftColor = "#f44336";
+            feedbackBox.classList.add('visible');
+        }
+    }
+
+    function resetAll() {
+        document.querySelectorAll('.task-item').forEach(item => {
+            item.classList.remove('answered');
+            
+            // Buttons resetten
+            const buttons = item.querySelectorAll('.choice-btn');
+            buttons.forEach(btn => btn.classList.remove('correct', 'wrong'));
+
+            // Feedback resetten
+            const fb = item.querySelector('.feedback-box');
+            fb.classList.remove('visible');
+            fb.style.background = ""; // Reset to CSS default
+            fb.style.color = "";
+            fb.style.borderLeftColor = "";
+            fb.innerHTML = "";
+        });
+
+        // Neu mischen
+        shuffleAll();
+    }
+
+    function solveAll() {
+        document.querySelectorAll('.task-item').forEach(item => {
+            if (!item.classList.contains('answered')) {
+                item.classList.add('answered');
+                
+                // Wir suchen den Button, der "true" im onclick hat
+                const correctBtn = Array.from(item.querySelectorAll('.choice-btn')).find(b => b.getAttribute('onclick').includes('true'));
+                
+                if (correctBtn) {
+                    correctBtn.classList.add('correct');
+                    
+                    // Feedback anzeigen
+                    const fb = item.querySelector('.feedback-box');
+                    
+                    // Extrahiere Erklärungstext aus dem onclick attribut
+                    const onclickText = correctBtn.getAttribute('onclick');
+                    // Wir trennen bei einfachem Anführungszeichen (Vorsicht bei verschachtelten ' )
+                    // Der Aufbau ist immer: checkAnswer(this, true, 'TEXT')
+                    const parts = onclickText.split("'");
+                    // Da der Text am Ende steht, nehmen wir das zweitletzte Element (das letzte ist meist )
+                    let explanationText = "";
+                    if (parts.length >= 2) {
+                         explanationText = parts[parts.length - 2];
+                    }
+
+                    fb.innerHTML = "<strong>Lösung:</strong> " + explanationText;
+                    // Reset style to success default in case it was red before
+                    fb.style.background = ""; 
+                    fb.style.color = "";
+                    fb.style.borderLeftColor = "";
+                    fb.classList.add('visible');
+                }
+            }
+        });
+    }
+
+    function shuffleAll() {
+        document.querySelectorAll('.shuffle-me').forEach(container => {
+            for (let i = container.children.length; i >= 0; i--) {
+                container.appendChild(container.children[Math.random() * i | 0]);
+            }
+        });
+    }
+
+    // Initial shuffle
+    window.onload = shuffleAll;
+
+</script>
+
+</body>
+</html>
