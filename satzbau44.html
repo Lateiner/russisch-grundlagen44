@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch: Satztransformation (Aspekte)</title>
+    <style>
+        :root {
+            --primary: #3f51b5;
+            --primary-light: #e8eaf6;
+            --primary-dark: #303f9f;
+            --success: #4caf50;
+            --success-bg: #e8f5e9;
+            --error: #f44336;
+            --error-bg: #ffebee;
+            --text: #333;
+            --text-light: #555;
+            --bg-page: #f4f6f8;
+            --surface: #ffffff;
+            --border: #ddd;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            margin: 0;
+            padding: 15px;
+            background-color: var(--bg-page);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--surface);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        p.intro {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 30px;
+        }
+
+        /* --- Task Card Styles --- */
+        .task-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            transition: transform 0.2s;
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 10px;
+        }
+
+        .task-number {
+            font-weight: bold;
+            color: var(--primary);
+            background: var(--primary-light);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        /* Source Sentence */
+        .source-sentence-box {
+            background-color: #fafafa;
+            border-left: 4px solid var(--primary);
+            padding: 10px 15px;
+            margin-bottom: 20px;
+        }
+
+        .ru-text {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .de-text {
+            color: #777;
+            font-style: italic;
+            font-size: 0.95rem;
+            display: block;
+        }
+
+        .arrow-divider {
+            text-align: center;
+            font-size: 1.5rem;
+            color: var(--primary-light);
+            margin: -10px 0 15px 0;
+            line-height: 1;
+        }
+
+        /* Answer Area (Construction Zone) */
+        .answer-area {
+            min-height: 50px;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+            align-items: center;
+            background-color: #fff;
+            transition: border-color 0.3s;
+        }
+
+        .answer-area.active { border-color: var(--primary); background-color: #fcfdff; }
+        .answer-area.correct { border-color: var(--success); background-color: var(--success-bg); border-style: solid; }
+        .answer-area.wrong { border-color: var(--error); background-color: var(--error-bg); border-style: solid; }
+
+        .placeholder-text {
+            color: #aaa;
+            font-style: italic;
+            width: 100%;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        /* Word Bank */
+        .word-bank {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            padding: 10px;
+            background-color: var(--primary-light);
+            border-radius: 8px;
+        }
+
+        /* Words (Chips) */
+        .word-chip {
+            background: white;
+            border: 1px solid #c5cae9;
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            user-select: none;
+            box-shadow: 0 2px 2px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+            animation: fadeIn 0.3s;
+        }
+
+        .word-chip:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-color: var(--primary);
+        }
+
+        .word-chip.used {
+            opacity: 0.5;
+            pointer-events: none;
+            background-color: #eee;
+            border-color: transparent;
+            box-shadow: none;
+            display: none; /* Hide from bank when used */
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Feedback Text */
+        .feedback-text {
+            text-align: right;
+            font-weight: bold;
+            min-height: 24px;
+            margin-top: 10px;
+            font-size: 0.95rem;
+        }
+        .text-success { color: #2e7d32; }
+        .text-error { color: #c62828; }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+            border-top: 1px dashed #eee;
+            padding-top: 15px;
+        }
+
+        button.action-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .btn-check { background-color: var(--primary); color: white; }
+        .btn-check:hover { background-color: var(--primary-dark); }
+        
+        .btn-reset { background-color: #90a4ae; color: white; }
+        .btn-reset:hover { background-color: #78909c; }
+
+        .btn-solve { background-color: #ff9800; color: white; }
+        .btn-solve:hover { background-color: #f57c00; }
+
+        @media (max-width: 600px) {
+            .word-chip { padding: 6px 12px; font-size: 0.95rem; }
+            .ru-text { font-size: 1.1rem; }
+            .task-card { padding: 15px; }
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Satztransformation</h1>
+    <p class="intro">
+        Verwandeln Sie die Sätze vom Präsens (Prozess) in die <strong>Vergangenheit (Resultat)</strong>.<br>
+        Klicken Sie die Wörter an, um den Satz zu bauen. Achten Sie auf das richtige Verb!
+    </p>
+
+    <div id="tasks-container">
+        <!-- Tasks will be injected here by JavaScript -->
+    </div>
+
+</div>
+
+<script>
+    // Aufgaben-Daten
+    // original: NSV Präsens
+    // targetParts: Die korrekte Satzstruktur im SV Präteritum
+    // distractor: Das falsche Verb (z.B. NSV Präteritum oder falsche Form), das mit im Pool liegt
+    const tasks = [
+        {
+            id: 1,
+            original: "Он задаёт вопрос.",
+            trans: "Er stellt eine Frage.",
+            targetTrans: "Er hat eine Frage gestellt.",
+            targetParts: ["Он", "задал", "вопрос."],
+            distractor: "задавал"
+        },
+        {
+            id: 2,
+            original: "Студент сдаёт экзамен.",
+            trans: "Der Student legt die Prüfung ab.",
+            targetTrans: "Der Student hat die Prüfung bestanden/abgegeben.",
+            targetParts: ["Студент", "сдал", "экзамен."],
+            distractor: "сдавал"
+        },
+        {
+            id: 3,
+            original: "Мы продаём дом.",
+            trans: "Wir verkaufen das Haus.",
+            targetTrans: "Wir haben das Haus verkauft.",
+            targetParts: ["Мы", "продали", "дом."],
+            distractor: "продавали"
+        },
+        {
+            id: 4,
+            original: "Анна отдаёт книгу.",
+            trans: "Anna gibt das Buch zurück.",
+            targetTrans: "Anna hat das Buch zurückgegeben.",
+            targetParts: ["Анна", "отдала", "книгу."],
+            distractor: "отдавала"
+        },
+        {
+            id: 5,
+            original: "Ты передаёшь привет.",
+            trans: "Du richtest Grüße aus. (m)",
+            targetTrans: "Du hast Grüße ausgerichtet.",
+            targetParts: ["Ты", "передал", "привет."],
+            distractor: "передавал"
+        },
+        {
+            id: 6,
+            original: "Они выдают паспорта.",
+            trans: "Sie geben die Pässe aus.",
+            targetTrans: "Sie haben die Pässe ausgegeben.",
+            targetParts: ["Они", "выдали", "паспорта."],
+            distractor: "выдавали"
+        },
+        {
+            id: 7,
+            original: "Брат создаёт проблемы.",
+            trans: "Der Bruder macht Probleme.",
+            targetTrans: "Der Bruder hat Probleme verursacht.",
+            targetParts: ["Брат", "создал", "проблемы."],
+            distractor: "создавал"
+        },
+        {
+            id: 8,
+            original: "Учитель раздаёт тесты.",
+            trans: "Der Lehrer teilt Tests aus.",
+            targetTrans: "Der Lehrer hat Tests ausgeteilt.",
+            targetParts: ["Учитель", "раздал", "тесты."],
+            distractor: "раздавал"
+        },
+        {
+            id: 9,
+            original: "Я (♀) подаю заявление.",
+            trans: "Ich reiche den Antrag ein.",
+            targetTrans: "Ich habe den Antrag eingereicht.",
+            targetParts: ["Я", "подала", "заявление."],
+            distractor: "подавала"
+        },
+        {
+            id: 10,
+            original: "Вы предаёте друга.",
+            trans: "Ihr verratet einen Freund.",
+            targetTrans: "Ihr habt einen Freund verraten.",
+            targetParts: ["Вы", "предали", "друга."],
+            distractor: "предавали"
+        }
+    ];
+
+    function init() {
+        const container = document.getElementById('tasks-container');
+        
+        tasks.forEach((task, index) => {
+            container.appendChild(createTaskElement(task, index + 1));
+        });
+    }
+
+    function createTaskElement(task, number) {
+        const card = document.createElement('div');
+        card.className = 'task-card';
+        card.id = `task-${task.id}`;
+
+        // Create Pool Items (Correct parts + Distractor)
+        const poolItems = [...task.targetParts, task.distractor];
+        // Shuffle
+        poolItems.sort(() => Math.random() - 0.5);
+
+        let poolHTML = '';
+        poolItems.forEach(word => {
+            poolHTML += `<div class="word-chip" onclick="moveWord(this, 'bank', 'answer', ${task.id})">${word}</div>`;
+        });
+
+        card.innerHTML = `
+            <div class="task-header">
+                <span class="task-number">Aufgabe ${number}</span>
+            </div>
+            <div class="source-sentence-box">
+                <span class="ru-text">${task.original}</span>
+                <span class="de-text">${task.trans}</span>
+            </div>
+            
+            <div class="arrow-divider">⬇</div>
+            <span class="de-text" style="text-align:center; margin-bottom:5px;">Ziel: ${task.targetTrans}</span>
+
+            <div class="answer-area" id="answer-${task.id}" onclick="returnWord(event, ${task.id})">
+                <div class="placeholder-text">Klicken Sie auf die Wörter unten...</div>
+            </div>
+
+            <div class="word-bank" id="bank-${task.id}">
+                ${poolHTML}
+            </div>
+
+            <div class="feedback-text" id="fb-${task.id}"></div>
+
+            <div class="controls">
+                <button class="action-btn btn-reset" onclick="resetTask(${task.id})">Zurücksetzen</button>
+                <button class="action-btn btn-solve" onclick="solveTask(${task.id})">Lösung</button>
+                <button class="action-btn btn-check" onclick="checkTask(${task.id})">Prüfen</button>
+            </div>
+        `;
+
+        return card;
+    }
+
+    // Move word from Bank to Answer
+    window.moveWord = function(el, sourceId, targetId, taskId) {
+        const answerArea = document.getElementById(`answer-${taskId}`);
+        const placeholder = answerArea.querySelector('.placeholder-text');
+        
+        if (placeholder) {
+            placeholder.style.display = 'none';
+        }
+
+        // Clone the element visually to the answer area, hide original
+        const wordText = el.textContent;
+        
+        // Create new chip for answer area
+        const newChip = document.createElement('div');
+        newChip.className = 'word-chip';
+        newChip.textContent = wordText;
+        newChip.dataset.sourceIndex = Array.from(el.parentNode.children).indexOf(el); // Remember where it came from
+        
+        // Make original invisible
+        el.style.visibility = 'hidden';
+        el.style.width = '0';
+        el.style.padding = '0';
+        el.style.margin = '0';
+        el.style.border = '0'; // Completely collapse
+
+        answerArea.appendChild(newChip);
+        
+        // Reset feedback
+        clearFeedback(taskId);
+    };
+
+    // Return word from Answer to Bank (Event delegation)
+    window.returnWord = function(e, taskId) {
+        if (!e.target.classList.contains('word-chip')) return;
+        
+        const chip = e.target;
+        const bank = document.getElementById(`bank-${taskId}`);
+        const originalIndex = chip.dataset.sourceIndex;
+        
+        // Find original hidden element
+        const originalEl = bank.children[originalIndex];
+        
+        // Restore original
+        originalEl.style.visibility = 'visible';
+        originalEl.style.width = '';
+        originalEl.style.padding = '';
+        originalEl.style.margin = '';
+        originalEl.style.border = '';
+
+        // Remove from answer
+        chip.remove();
+
+        // Show placeholder if empty
+        const answerArea = document.getElementById(`answer-${taskId}`);
+        if (answerArea.children.length <= 1) { // 1 because placeholder is usually there but hidden
+            const ph = answerArea.querySelector('.placeholder-text');
+            if(ph) ph.style.display = 'block';
+        }
+        
+        clearFeedback(taskId);
+    };
+
+    window.checkTask = function(taskId) {
+        const task = tasks.find(t => t.id === taskId);
+        const answerArea = document.getElementById(`answer-${taskId}`);
+        const currentWords = Array.from(answerArea.querySelectorAll('.word-chip')).map(c => c.textContent);
+        
+        const feedback = document.getElementById(`fb-${taskId}`);
+        
+        // Check if correct parts match
+        const isCorrect = JSON.stringify(currentWords) === JSON.stringify(task.targetParts);
+
+        answerArea.classList.remove('correct', 'wrong');
+
+        if (isCorrect) {
+            answerArea.classList.add('correct');
+            feedback.textContent = "Richtig transformiert!";
+            feedback.className = "feedback-text text-success";
+        } else {
+            answerArea.classList.add('wrong');
+            // Check for specific error (Distractor used?)
+            if (currentWords.includes(task.distractor)) {
+                 feedback.textContent = "Falscher Aspekt! Benutzen Sie das vollendete Verb (SV).";
+            } else if (currentWords.length !== task.targetParts.length) {
+                feedback.textContent = "Unvollständig oder falsche Reihenfolge.";
+            } else {
+                feedback.textContent = "Leider falsch.";
+            }
+            feedback.className = "feedback-text text-error";
+        }
+    };
+
+    window.resetTask = function(taskId) {
+        const answerArea = document.getElementById(`answer-${taskId}`);
+        const bank = document.getElementById(`bank-${taskId}`);
+        
+        // Remove all chips from answer
+        answerArea.querySelectorAll('.word-chip').forEach(chip => chip.remove());
+        
+        // Show placeholder
+        const ph = answerArea.querySelector('.placeholder-text');
+        if(ph) ph.style.display = 'block';
+        
+        // Restore bank
+        Array.from(bank.children).forEach(child => {
+            child.style.visibility = 'visible';
+            child.style.width = '';
+            child.style.padding = '';
+            child.style.margin = '';
+            child.style.border = '';
+        });
+
+        clearFeedback(taskId);
+    };
+
+    window.solveTask = function(taskId) {
+        resetTask(taskId);
+        const task = tasks.find(t => t.id === taskId);
+        const bank = document.getElementById(`bank-${taskId}`);
+        
+        task.targetParts.forEach(word => {
+            // Find word in bank
+            const bankChips = Array.from(bank.children);
+            const found = bankChips.find(c => c.textContent === word && c.style.visibility !== 'hidden');
+            
+            if (found) {
+                // Trigger move logic
+                moveWord(found, 'bank', 'answer', taskId);
+            }
+        });
+        
+        // Trigger visual validation
+        const answerArea = document.getElementById(`answer-${taskId}`);
+        answerArea.classList.add('correct');
+        const feedback = document.getElementById(`fb-${taskId}`);
+        feedback.textContent = "Lösung angezeigt.";
+        feedback.className = "feedback-text text-success";
+    };
+
+    function clearFeedback(taskId) {
+        const answerArea = document.getElementById(`answer-${taskId}`);
+        const feedback = document.getElementById(`fb-${taskId}`);
+        answerArea.classList.remove('correct', 'wrong');
+        feedback.textContent = "";
+    }
+
+    // Initialize
+    init();
+
+</script>
+
+</body>
+</html>
