@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch: Kollokationen (Multiple Choice)</title>
+    <style>
+        :root {
+            --primary: #3f51b5;
+            --primary-light: #e8eaf6;
+            --success: #4caf50;
+            --success-bg: #e8f5e9;
+            --error: #f44336;
+            --error-bg: #ffebee;
+            --text: #333;
+            --text-light: #666;
+            --bg-page: #f4f6f8;
+            --surface: #ffffff;
+            --border: #ddd;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            margin: 0;
+            padding: 15px;
+            background-color: var(--bg-page);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--surface);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        p.intro {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 30px;
+        }
+
+        /* --- Question Card Styles --- */
+        .quiz-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            transition: box-shadow 0.2s;
+            border-left: 5px solid var(--primary);
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .translation {
+            display: block;
+            font-size: 0.95rem;
+            color: #888;
+            font-style: italic;
+            margin-bottom: 20px;
+        }
+
+        .gap {
+            display: inline-block;
+            min-width: 80px;
+            border-bottom: 2px solid var(--text);
+            text-align: center;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        /* --- Options Grid --- */
+        .options-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .option-btn {
+            flex: 1; /* Buttons teilen sich den Platz */
+            min-width: 140px; /* Mindestbreite bevor Umbruch */
+            padding: 12px 15px;
+            background-color: #fafafa;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            color: var(--text);
+            text-align: center;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .option-btn:hover {
+            border-color: var(--primary);
+            background-color: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        /* Mobile Optimization: Full width on small screens if needed */
+        @media (max-width: 500px) {
+            .option-btn {
+                min-width: 100%;
+            }
+        }
+
+        /* Feedback States */
+        .option-btn.correct {
+            background-color: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+        
+        .option-btn.wrong {
+            background-color: var(--error);
+            color: white;
+            border-color: var(--error);
+            opacity: 0.6;
+        }
+
+        .quiz-card.answered .option-btn {
+            pointer-events: none;
+        }
+
+        /* Explanation Box */
+        .feedback {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            display: none;
+        }
+
+        .feedback.visible { display: block; }
+        .feedback.success { background-color: var(--success-bg); color: #2e7d32; border: 1px solid #c8e6c9; }
+        .feedback.error { background-color: var(--error-bg); color: #c62828; border: 1px solid #ffcdd2; }
+
+        /* --- Controls --- */
+        .controls {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px dashed var(--border);
+        }
+
+        button.ctrl-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        .btn-reset { background-color: #90a4ae; color: white; }
+        .btn-reset:hover { background-color: #78909c; }
+
+        .btn-solve { background-color: #ff9800; color: white; }
+        .btn-solve:hover { background-color: #f57c00; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Kollokationen & Kontext</h1>
+    <p class="intro">
+        Wählen Sie das Verb, das in den Kontext passt.<br>
+        Achten Sie auf feine Unterschiede in der Bedeutung.
+    </p>
+
+    <!-- Quiz Container -->
+    <div id="quiz-container">
+        <!-- Fragen werden per JS generiert -->
+    </div>
+
+    <div class="controls">
+        <button class="ctrl-btn btn-reset" onclick="resetAll()">Zurücksetzen</button>
+        <button class="ctrl-btn btn-solve" onclick="solveAll()">Lösung anzeigen</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        {
+            id: 1,
+            text: "Студент очень хочет <span class='gap'>...</span> этот экзамен.",
+            trans: "Der Student will dieses Examen unbedingt bestehen.",
+            options: ["дать", "сдать", "предать"],
+            correct: 1, // Index of correct answer
+            explanation: "<strong>сдать экзамен</strong> = eine Prüfung bestehen/ablegen. <em>дать</em> = geben, <em>предать</em> = verraten."
+        },
+        {
+            id: 2,
+            text: "Учитель <span class='gap'>...</span> нам трудный вопрос.",
+            trans: "Der Lehrer stellt uns eine schwierige Frage.",
+            options: ["сдаёт", "выдаёт", "задаёт"],
+            correct: 2,
+            explanation: "<strong>задавать вопрос</strong> = eine Frage stellen. <em>выдавать</em> = aushändigen/verraten."
+        },
+        {
+            id: 3,
+            text: "Пожалуйста, <span class='gap'>...</span> привет твоей маме!",
+            trans: "Bitte richte deiner Mutter Grüße aus!",
+            options: ["передай", "отдай", "продай"],
+            correct: 0,
+            explanation: "<strong>передать привет</strong> = Grüße ausrichten. <em>отдай</em> = gib zurück."
+        },
+        {
+            id: 4,
+            text: "Я должен <span class='gap'>...</span> долг банку.",
+            trans: "Ich muss dem Bank die Schulden zurückzahlen.",
+            options: ["поддать", "отдать", "создать"],
+            correct: 1,
+            explanation: "<strong>отдать долг</strong> = Schulden zurückzahlen/zurückgeben. <em>создать</em> = erschaffen."
+        },
+        {
+            id: 5,
+            text: "Они решили <span class='gap'>...</span> свою квартиру и купить дом.",
+            trans: "Sie haben beschlossen, ihre Wohnung zu verkaufen und ein Haus zu kaufen.",
+            options: ["продать", "предать", "задать"],
+            correct: 0,
+            explanation: "<strong>продать</strong> = verkaufen. <em>предать</em> = verraten."
+        },
+        {
+            id: 6,
+            text: "Официант <span class='gap'>...</span> суп.",
+            trans: "Der Kellner serviert die Suppe.",
+            options: ["даёт", "удаётся", "подаёт"],
+            correct: 2,
+            explanation: "<strong>подавать</strong> = servieren (Essen). <em>удаётся</em> = es gelingt."
+        },
+        {
+            id: 7,
+            text: "Он <span class='gap'>...</span> своего лучшего друга.",
+            trans: "Er hat seinen besten Freund verraten.",
+            options: ["предал", "передал", "продал"],
+            correct: 0,
+            explanation: "<strong>предать</strong> = verraten (Treuebruch). <em>передать</em> = übergeben."
+        },
+        {
+            id: 8,
+            text: "Преподаватель <span class='gap'>...</span> тесты студентам.",
+            trans: "Der Dozent verteilt die Tests an die Studenten.",
+            options: ["раздаёт", "отдаёт", "сдаёт"],
+            correct: 0,
+            explanation: "<strong>раздавать</strong> = verteilen (an viele). <em>отдаёт</em> = gibt zurück."
+        }
+    ];
+
+    function renderQuiz() {
+        const container = document.getElementById('quiz-container');
+        container.innerHTML = '';
+
+        questions.forEach((q, index) => {
+            const card = document.createElement('div');
+            card.className = 'quiz-card';
+            card.id = `q-${index}`;
+
+            let buttonsHtml = '';
+            // Shuffle options for display, but keep track of correct one
+            // Simple mapping approach:
+            q.options.forEach((opt, optIndex) => {
+                buttonsHtml += `<div class="option-btn" onclick="checkAnswer(${index}, ${optIndex}, this)">${opt}</div>`;
+            });
+
+            card.innerHTML = `
+                <div class="question-text">${index + 1}. ${q.text}</div>
+                <span class="translation">${q.trans}</span>
+                <div class="options-container">
+                    ${buttonsHtml}
+                </div>
+                <div class="feedback" id="fb-${index}"></div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function checkAnswer(qIndex, optIndex, btn) {
+        const q = questions[qIndex];
+        const card = document.getElementById(`q-${qIndex}`);
+        const feedback = document.getElementById(`fb-${qIndex}`);
+
+        if (card.classList.contains('answered')) return;
+        card.classList.add('answered');
+
+        if (optIndex === q.correct) {
+            btn.classList.add('correct');
+            feedback.innerHTML = "<strong>Richtig!</strong> " + q.explanation;
+            feedback.className = "feedback visible success";
+            
+            // Fill gap
+            const gap = card.querySelector('.gap');
+            gap.textContent = q.options[optIndex];
+            gap.style.borderBottom = "none";
+        } else {
+            btn.classList.add('wrong');
+            feedback.innerHTML = "<strong>Leider falsch.</strong> " + q.explanation;
+            feedback.className = "feedback visible error";
+            
+            // Highlight correct one
+            const btns = card.querySelectorAll('.option-btn');
+            btns[q.correct].classList.add('correct');
+        }
+    }
+
+    function resetAll() {
+        // Reload to reshuffle options if implemented, or just clean up
+        const cards = document.querySelectorAll('.quiz-card');
+        cards.forEach((card, index) => {
+            card.classList.remove('answered');
+            
+            // Reset gap
+            const gap = card.querySelector('.gap');
+            gap.innerHTML = "...";
+            gap.style.borderBottom = "";
+
+            // Reset buttons
+            const btns = card.querySelectorAll('.option-btn');
+            btns.forEach(b => b.classList.remove('correct', 'wrong'));
+
+            // Reset feedback
+            const fb = document.getElementById(`fb-${index}`);
+            fb.className = "feedback";
+            fb.innerHTML = "";
+        });
+    }
+
+    function solveAll() {
+        questions.forEach((q, index) => {
+            const card = document.getElementById(`q-${index}`);
+            if (!card.classList.contains('answered')) {
+                card.classList.add('answered');
+                
+                const btns = card.querySelectorAll('.option-btn');
+                btns[q.correct].classList.add('correct');
+
+                const feedback = document.getElementById(`fb-${index}`);
+                feedback.innerHTML = "<strong>Lösung:</strong> " + q.explanation;
+                feedback.className = "feedback visible success";
+                
+                // Fill gap
+                const gap = card.querySelector('.gap');
+                gap.textContent = q.options[q.correct];
+                gap.style.borderBottom = "none";
+            }
+        });
+    }
+
+    // Init
+    window.onload = renderQuiz;
+
+</script>
+
+</body>
+</html>
