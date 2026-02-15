@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Vokabeltrainer - Verben & Präfixe</title>
+    <style>
+        :root {
+            /* Farbpalette (Grüntöne) */
+            --primary-color: #2e7d32;       /* Dunkelgrün */
+            --secondary-color: #4caf50;     /* Mittelgrün */
+            --accent-color: #81c784;        /* Hellgrün */
+            --bg-color: #e8f5e9;            /* Sehr helles Grün für Hintergrund */
+            --text-color: #1b5e20;          /* Sehr dunkles Grün für Text */
+            --card-bg: #ffffff;
+            --shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden; /* Verhindert Scrollen bei Flip-Animationen */
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .progress-container {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+            background: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        /* --- Karteikarten 3D Flip Styles --- */
+        .scene {
+            width: 100%;
+            height: 300px;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden; /* Wichtig: Versteckt die Rückseite */
+            -webkit-backface-visibility: hidden;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+            background-color: var(--card-bg);
+            border: 2px solid var(--accent-color);
+            overflow: hidden;
+        }
+
+        .card-face-front {
+            /* Vorderseite Standard */
+        }
+
+        .card-face-back {
+            transform: rotateY(180deg);
+            background-color: #f1f8e9; /* Leicht abweichender Hintergrund für Rückseite */
+            border-color: var(--secondary-color);
+        }
+
+        .card-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888;
+            margin-bottom: 15px;
+            position: absolute;
+            top: 15px;
+        }
+
+        .card-text {
+            font-size: 2rem;
+            font-weight: 500;
+            color: #333;
+            line-height: 1.4;
+            max-width: 100%;
+            word-wrap: break-word;
+        }
+
+        /* --- Controls --- */
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background-color: var(--accent-color);
+            color: var(--text-color);
+        }
+
+        .shortcuts-hint {
+            margin-top: 15px;
+            font-size: 0.8rem;
+            color: #777;
+            text-align: center;
+        }
+
+        /* --- Responsive Anpassungen --- */
+        @media (max-width: 600px) {
+            .scene {
+                height: 250px;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+            button {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+                flex-grow: 1; /* Buttons füllen Breite auf Mobile */
+            }
+            .controls {
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <h1>Vokabeltrainer Russisch</h1>
+        
+        <div class="progress-container">
+            <span id="progress-text">1 / 40</span>
+        </div>
+
+        <div class="scene" id="card-scene">
+            <div class="card" id="card">
+                <!-- Vorderseite -->
+                <div class="card-face card-face-front">
+                    <span class="card-label">Russisch</span>
+                    <div class="card-text" id="front-text">Lade Daten...</div>
+                </div>
+                <!-- Rückseite -->
+                <div class="card-face card-face-back">
+                    <span class="card-label">Deutsch</span>
+                    <div class="card-text" id="back-text">...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="btn-prev" class="btn-secondary">← Vorherige</button>
+            <button id="btn-shuffle">Mischen 🔀</button>
+            <button id="btn-reset">Anfang ↺</button>
+            <button id="btn-next" class="btn-secondary">Nächste →</button>
+        </div>
+
+        <div class="shortcuts-hint">
+            Tastatur: Leertaste/Enter (Drehen) | Pfeile (Navigieren) | Pos1 (Anfang)
+        </div>
+    </div>
+
+    <script>
+        // --- Daten ---
+        // Die Liste wurde basierend auf der Anfrage in ein Array von Objekten umgewandelt.
+        // Die Nummerierung am Anfang wurde entfernt, da die App eine eigene Zählung hat.
+        const originalVocabulary = [
+            { front: "давáть / дать", back: "geben" },
+            { front: "сдавáть / сдать", back: "abgeben; (eine Prüfung) ablegen/bestehen; vermieten" },
+            { front: "продавáть / продáть", back: "verkaufen" },
+            { front: "отдавáть / отдáть", back: "zurückgeben; (Schulden) zurückzahlen; weggeben" },
+            { front: "задавáть / задáть (вопрóс)", back: "(eine Frage) stellen; aufgeben" },
+            { front: "выдавáть / вы́дать", back: "aushändigen; ausgeben (Pässe, Diplome); verraten" },
+            { front: "передавáть / передáть", back: "übergeben; weitergeben; (Grüße) ausrichten" },
+            { front: "предавáть / предáть", back: "verraten (jemanden); treulos sein" },
+            { front: "подавáть / подáть", back: "servieren; reichen; (einen Antrag) einreichen" },
+            { front: "раздавáть / раздáть", back: "verteilen; austeilen" },
+            { front: "создавáть / создáть", back: "erschaffen; erstellen; verursachen" },
+            { front: "узнавáть / узнáть", back: "erfahren; erkennen" },
+            { front: "вставáть / встать", back: "aufstehen" },
+            { front: "удавáться / удáться", back: "gelingen" },
+            { front: "поддавáться / поддáться", back: "nachgeben; erliegen" },
+            { front: "недодавáть / недодáть", back: "zu wenig geben" },
+            { front: "придавáть / придáть (значéние)", back: "(Bedeutung) beimessen" },
+            { front: "экзáмен", back: "Prüfung; Examen" },
+            { front: "кни́га", back: "Buch" },
+            { front: "вопрóс", back: "Frage" },
+            { front: "привéт", back: "Gruß" },
+            { front: "пáспорт", back: "Pass" },
+            { front: "секрéт", back: "Geheimnis" },
+            { front: "друг", back: "Freund" },
+            { front: "соль", back: "Salz" },
+            { front: "меню́", back: "Menü; Speisekarte" },
+            { front: "суп", back: "Suppe" },
+            { front: "дéньги", back: "Geld" },
+            { front: "сдáча", back: "Wechselgeld; Rückgeld" },
+            { front: "долг", back: "Schuld; Schulden" },
+            { front: "зарплáта", back: "Gehalt; Lohn" },
+            { front: "отчёт", back: "Bericht" },
+            { front: "значéние", back: "Bedeutung; Wichtigkeit" },
+            { front: "вчерá", back: "gestern" },
+            { front: "чáсто", back: "oft" },
+            { front: "обы́чно", back: "gewöhnlich; normalerweise" },
+            { front: "накoнéц", back: "endlich; schließlich" },
+            { front: "успéшно", back: "erfolgreich" },
+            { front: "всегдá", back: "immer" },
+            { front: "кáждое лéто", back: "jeden Sommer" }
+        ];
+
+        // --- Zustand ---
+        let currentStack = [...originalVocabulary]; // Kopie für das aktuelle Spiel (wg. Mischen)
+        let currentIndex = 0;
+        let isFlipped = false;
+
+        // --- DOM Elemente ---
+        const cardElement = document.getElementById('card');
+        const frontTextElement = document.getElementById('front-text');
+        const backTextElement = document.getElementById('back-text');
+        const progressElement = document.getElementById('progress-text');
+        const cardScene = document.getElementById('card-scene');
+
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const btnShuffle = document.getElementById('btn-shuffle');
+        const btnReset = document.getElementById('btn-reset');
+
+        // --- Funktionen ---
+
+        function init() {
+            renderCard();
+            addEventListeners();
+        }
+
+        // Karte anzeigen und Textgröße anpassen
+        function renderCard() {
+            const item = currentStack[currentIndex];
+            
+            // Text setzen
+            frontTextElement.textContent = item.front;
+            backTextElement.textContent = item.back;
+
+            // Fortschritt aktualisieren
+            progressElement.textContent = `${currentIndex + 1} / ${currentStack.length}`;
+
+            // Karte zurückdrehen, falls sie umgedreht war (ohne Animation für den Wechsel)
+            if (isFlipped) {
+                cardElement.style.transition = 'none'; // Animation ausschalten
+                cardElement.classList.remove('is-flipped');
+                isFlipped = false;
+                // Timeout nötig, damit der Browser den Style-Change registriert
+                setTimeout(() => {
+                    cardElement.style.transition = 'transform 0.6s';
+                }, 50);
+            }
+
+            // Dynamische Schriftgröße anpassen
+            adjustFontSize(frontTextElement);
+            adjustFontSize(backTextElement);
+        }
+
+        // Passt die Schriftgröße an, damit langer Text in die Karte passt
+        function adjustFontSize(element) {
+            let fontSize = 2.5; // Startgröße in rem
+            element.style.fontSize = fontSize + 'rem';
+
+            // Solange der Text größer ist als der Container, verkleinern
+            while (
+                (element.scrollHeight > element.parentElement.clientHeight - 40 || 
+                 element.scrollWidth > element.parentElement.clientWidth - 20) && 
+                fontSize > 0.8
+            ) {
+                fontSize -= 0.1;
+                element.style.fontSize = fontSize + 'rem';
+            }
+        }
+
+        function flipCard() {
+            isFlipped = !isFlipped;
+            cardElement.classList.toggle('is-flipped');
+        }
+
+        function nextCard() {
+            if (currentIndex < currentStack.length - 1) {
+                currentIndex++;
+                renderCard();
+            } else {
+                // Optional: Loop zum Anfang
+                // currentIndex = 0;
+                // renderCard();
+                
+                // Visuelles Feedback am Ende (kurzes Wackeln)
+                cardScene.animate([
+                    { transform: 'translateX(0)' },
+                    { transform: 'translateX(10px)' },
+                    { transform: 'translateX(-10px)' },
+                    { transform: 'translateX(0)' }
+                ], { duration: 200 });
+            }
+        }
+
+        function prevCard() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderCard();
+            } else {
+                // Visuelles Feedback am Anfang
+                cardScene.animate([
+                    { transform: 'translateX(0)' },
+                    { transform: 'translateX(-10px)' },
+                    { transform: 'translateX(10px)' },
+                    { transform: 'translateX(0)' }
+                ], { duration: 200 });
+            }
+        }
+
+        function resetToStart() {
+            currentIndex = 0;
+            renderCard();
+        }
+
+        // Fisher-Yates Shuffle Algorithmus
+        function shuffleStack() {
+            // Animation andeuten
+            cardElement.style.opacity = '0';
+            
+            setTimeout(() => {
+                for (let i = currentStack.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [currentStack[i], currentStack[j]] = [currentStack[j], currentStack[i]];
+                }
+                currentIndex = 0;
+                renderCard();
+                cardElement.style.opacity = '1';
+            }, 300);
+        }
+
+        // --- Event Listeners ---
+
+        function addEventListeners() {
+            // Klick/Touch auf Karte
+            cardScene.addEventListener('click', flipCard);
+
+            // Buttons
+            btnNext.addEventListener('click', (e) => {
+                nextCard();
+                e.target.blur(); // Fokus entfernen, damit Leertaste nicht den Button drückt
+            });
+            btnPrev.addEventListener('click', (e) => {
+                prevCard();
+                e.target.blur();
+            });
+            btnReset.addEventListener('click', (e) => {
+                // Um wieder die Originalreihenfolge zu haben, könnten wir hier 
+                // currentStack = [...originalVocabulary] setzen.
+                // Laut Anforderung soll aber nur "zum Anfang gesprungen" werden (aktueller Stapel).
+                resetToStart();
+                e.target.blur();
+            });
+            btnShuffle.addEventListener('click', (e) => {
+                shuffleStack();
+                e.target.blur();
+            });
+
+            // Tastatursteuerung
+            document.addEventListener('keydown', (e) => {
+                switch(e.key) {
+                    case ' ':
+                    case 'Enter':
+                        e.preventDefault(); // Verhindert Scrollen bei Leertaste
+                        flipCard();
+                        break;
+                    case 'ArrowRight':
+                        nextCard();
+                        break;
+                    case 'ArrowLeft':
+                        prevCard();
+                        break;
+                    case 'Home':
+                        resetToStart();
+                        break;
+                }
+            });
+        }
+
+        // Starten
+        init();
+
+    </script>
+</body>
+</html>
