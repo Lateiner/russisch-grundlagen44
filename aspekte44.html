@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch: Aspekt-Paare bilden</title>
+    <!-- Polyfill für Touch-Geräte -->
+    <script src="https://cdn.jsdelivr.net/npm/drag-drop-touch@1.3.1/DragDropTouch.js"></script>
+    <style>
+        :root {
+            --primary: #3f51b5;
+            --primary-light: #e8eaf6;
+            --primary-dark: #303f9f;
+            --success: #4caf50;
+            --success-bg: #e8f5e9;
+            --error: #f44336;
+            --error-bg: #ffebee;
+            --text: #333;
+            --bg-page: #f4f6f8;
+            --surface: #ffffff;
+            --border: #ddd;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            margin: 0;
+            padding: 15px;
+            background-color: var(--bg-page);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--surface);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        p.intro {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        /* --- Source Pool (Sticky) --- */
+        .source-container {
+            background-color: var(--primary-light);
+            padding: 15px;
+            border-radius: 12px;
+            min-height: 70px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 30px;
+            border: 2px dashed #9fa8da;
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* Draggable Chips (SV Verbs) */
+        .draggable {
+            background: white;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 18px;
+            border-radius: 30px;
+            cursor: grab;
+            font-weight: 700;
+            font-size: 1.1rem;
+            user-select: none;
+            touch-action: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .draggable:active {
+            cursor: grabbing;
+            transform: scale(1.05);
+            box-shadow: 0 5px 12px rgba(0,0,0,0.2);
+        }
+
+        .draggable.correct-match { background-color: var(--success); color: white; border-color: var(--success); }
+        .draggable.incorrect-match { background-color: var(--error); color: white; border-color: var(--error); }
+
+        /* --- Pairs Grid --- */
+        .pairs-grid {
+            display: grid;
+            /* Responsive: 1 Spalte Mobile, 2 Spalten Tablet, 3 Desktop */
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        /* Card for each pair */
+        .pair-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column; /* Stack vertically inside card */
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+
+        .pair-card:hover {
+            border-color: var(--primary-light);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .translation-hint {
+            font-size: 0.85rem;
+            color: #888;
+            font-style: italic;
+            margin-bottom: 5px;
+        }
+
+        /* The Comparison Layout inside the card */
+        .aspect-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        /* NSV Side (Static) */
+        .nsv-box {
+            flex: 1;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #555;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        .nsv-label {
+            display: block;
+            font-size: 0.7rem;
+            color: #999;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .arrow {
+            font-size: 1.2rem;
+            color: #bbb;
+        }
+
+        /* SV Side (Dropzone) */
+        .dropzone {
+            flex: 1;
+            height: 50px;
+            background: #fafafa;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        /* Label overlay for empty dropzone */
+        .dropzone::after {
+            content: "SV hier";
+            position: absolute;
+            font-size: 0.7rem;
+            color: #ccc;
+            pointer-events: none;
+            text-transform: uppercase;
+        }
+        .dropzone:not(:empty)::after {
+            content: "";
+        }
+
+        .dropzone.drag-over {
+            background-color: #e3f2fd;
+            border-color: var(--primary);
+            transform: scale(1.02);
+        }
+
+        .dropzone.correct { border-color: var(--success); background-color: var(--success-bg); border-style: solid; }
+        .dropzone.incorrect { border-color: var(--error); background-color: var(--error-bg); border-style: solid; }
+
+        /* --- Controls --- */
+        .controls {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px dashed var(--border);
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        .btn-reset { background-color: #90a4ae; color: white; }
+        .btn-reset:hover { background-color: #78909c; }
+
+        .btn-solve { background-color: #ff9800; color: white; }
+        .btn-solve:hover { background-color: #f57c00; }
+
+        .feedback-msg {
+            text-align: right;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .text-success { color: #2e7d32; }
+        .text-error { color: #c62828; }
+
+    </style>
+</head>
+<body>
+
+<div class="container" id="task-container">
+    <h1>Aspekt-Paare bilden</h1>
+    <p class="intro">
+        Ordnen Sie dem <strong>unvollendeten Verb (NSV)</strong> den passenden <strong>vollendeten Partner (SV)</strong> zu.<br>
+        Achten Sie auf die Vorsilben!
+    </p>
+
+    <!-- Wortspeicher (SV Verben) -->
+    <div class="source-container shuffle-me">
+        <div class="draggable" draggable="true" data-id="dat">дать</div>
+        <div class="draggable" draggable="true" data-id="sdat">сдать</div>
+        <div class="draggable" draggable="true" data-id="prodat">продать</div>
+        <div class="draggable" draggable="true" data-id="zadat">задать</div>
+        <div class="draggable" draggable="true" data-id="otdat">отдать</div>
+        <div class="draggable" draggable="true" data-id="peredat">передать</div>
+        <div class="draggable" draggable="true" data-id="vstat">встать</div>
+        <div class="draggable" draggable="true" data-id="uznat">узнать</div>
+    </div>
+
+    <!-- Raster mit festen NSV Karten -->
+    <div class="pairs-grid">
+
+        <!-- 1. Geben -->
+        <div class="pair-card">
+            <span class="translation-hint">geben</span>
+            <div class="aspect-row">
+                <div class="nsv-box">
+                    <span class="nsv-label">NSV</span>
+                    давать
+                </div>
+                <div class="arrow">➔</div>
+                <div class="dropzone" data-match="dat"></div>
+            </div>
+        </div>
+
+        <!-- 2. Abgeben -->
+        <div class="pair-card">
+            <span class="translation-hint">abgeben / bestehen</span>
+            <div class="aspect-row">
+                <div class="nsv-box">
+                    <span class="nsv-label">NSV</span>
+                    сдавать
+                </div>
+                <div class="arrow">➔</div>
+                <div class="dropzone" data-match="sdat"></div>
+            </div>
+        </div>
+
+        <!-- 3. Verkaufen -->
+        <div class="pair-card">
+            <span class="translation-hint">verkaufen</span>
+            <div class="aspect-row">
+                <div class="nsv-box">
+                    <span class="nsv-label">NSV</span>
+                    продавать
+                </div>
+                <div class="arrow">➔</div>
+                <div class="dropzone" data-match="prodat"></div>
+            </div>
+        </div>
+
+        <!-- 4. Aufgeben/Stellen -->
+        <div class="pair-card">
+            <span class="translation-hint">aufgeben / stellen</span>
+            <div class="aspect-row">
+                <div class="nsv-box">
+                    <span class="nsv-label">NSV</span>
+                    задавать
+                </div>
+                <div class="arrow">➔</div>
+                <div class="dropzone" data-match="zadat"></div>
+            </div>
+        </div>
+
+        <!-- 5. Zurückgeben -->
+        <div class="pair-card">
+            <span class="translation-hint">zurückgeben</span>
+            <div class="aspect-row">
+                <div class="nsv-box">
+                    <span class="nsv-label">NSV</span>
+                    отдавать
+                </div>
+                <div class="arrow">➔</div>
+                <div class="dropzone" data-match="otdat"></div>
+            </div>
+        </div>
+
+        <!-- 6. Übergeben/Ausrichten -->
+        <div class="pair-card">
+            <span class="translation-hint">übergeben / ausrichten</span>
+            <div class="aspect-row">
+                <div class="nsv-box">
+                    <span class="nsv-label">NSV</span>
+                    передавать
+                </div>
+                <div class="arrow">➔</div>
+                <div class="dropzone" data-match="peredat"></div>
+            </div>
+        </div>
+
+        <!-- 7. Aufstehen (Grammatik-Transfer) -->
+        <div class="pair-card">
+            <span class="translation-hint">aufstehen</span>
+            <div class="aspect-row">
+                <div class="nsv-box">
+                    <span class="nsv-label">NSV</span>
+                    вставать
+                </div>
+                <div class="arrow">➔</div>
+                <div class="dropzone" data-match="vstat"></div>
+            </div>
+        </div>
+
+        <!-- 8. Erfahren (Grammatik-Transfer) -->
+        <div class="pair-card">
+            <span class="translation-hint">erfahren / erkennen</span>
+            <div class="aspect-row">
+                <div class="nsv-box">
+                    <span class="nsv-label">NSV</span>
+                    узнавать
+                </div>
+                <div class="arrow">➔</div>
+                <div class="dropzone" data-match="uznat"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="feedback-msg"></div>
+
+    <div class="controls">
+        <button class="btn-reset" onclick="resetTask()">Zurücksetzen</button>
+        <button class="btn-solve" onclick="solveTask()">Lösung anzeigen</button>
+    </div>
+</div>
+
+<script>
+    /* --- Initialisierung --- */
+    window.onload = function() {
+        shuffleSource();
+    };
+
+    function shuffleSource() {
+        const container = document.querySelector('.source-container');
+        for (let i = container.children.length; i >= 0; i--) {
+            container.appendChild(container.children[Math.random() * i | 0]);
+        }
+    }
+
+    /* --- Drag & Drop Logic --- */
+    let draggedItem = null;
+
+    // Draggable Events
+    document.querySelectorAll('.draggable').forEach(item => {
+        item.addEventListener('dragstart', function(e) {
+            draggedItem = this;
+            e.dataTransfer.effectAllowed = 'move';
+            this.style.opacity = '0.4';
+        });
+
+        item.addEventListener('dragend', function() {
+            draggedItem = null;
+            this.style.opacity = '1';
+        });
+    });
+
+    // Dropzone Events
+    document.querySelectorAll('.dropzone').forEach(zone => {
+        zone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            zone.classList.add('drag-over');
+        });
+
+        zone.addEventListener('dragleave', function() {
+            zone.classList.remove('drag-over');
+        });
+
+        zone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            zone.classList.remove('drag-over');
+
+            if (!draggedItem) return;
+
+            // Logik: Wenn schon was drin liegt, tauschen wir es aus (altes zurück in Pool)
+            if (zone.children.length > 0) {
+                const oldItem = zone.children[0];
+                const sourceContainer = document.querySelector('.source-container');
+                
+                // Reset Style des alten Items
+                oldItem.classList.remove('correct-match', 'incorrect-match');
+                sourceContainer.appendChild(oldItem);
+            }
+
+            // Neues Item ablegen
+            zone.appendChild(draggedItem);
+
+            // Prüfen
+            checkMatch(zone, draggedItem);
+            updateStatus();
+        });
+    });
+
+    function checkMatch(zone, item) {
+        const matchId = zone.getAttribute('data-match');
+        const itemId = item.getAttribute('data-id');
+
+        // Styles zurücksetzen
+        zone.classList.remove('correct', 'incorrect');
+        item.classList.remove('correct-match', 'incorrect-match');
+
+        if (matchId === itemId) {
+            zone.classList.add('correct');
+            item.classList.add('correct-match');
+        } else {
+            zone.classList.add('incorrect');
+            item.classList.add('incorrect-match');
+        }
+    }
+
+    function updateStatus() {
+        const container = document.getElementById('task-container');
+        const feedback = container.querySelector('.feedback-msg');
+        
+        const zones = container.querySelectorAll('.dropzone');
+        const correctZones = container.querySelectorAll('.dropzone.correct');
+        const incorrectZones = container.querySelectorAll('.dropzone.incorrect');
+
+        if (incorrectZones.length > 0) {
+            feedback.textContent = "Einige Paare sind falsch.";
+            feedback.className = "feedback-msg text-error";
+        } else if (correctZones.length === zones.length) {
+            feedback.textContent = "Hervorragend! Alle Paare gefunden.";
+            feedback.className = "feedback-msg text-success";
+        } else {
+            feedback.textContent = "";
+        }
+    }
+
+    /* --- Buttons --- */
+    function resetTask() {
+        const source = document.querySelector('.source-container');
+        const items = document.querySelectorAll('.draggable');
+        const zones = document.querySelectorAll('.dropzone');
+        const feedback = document.querySelector('.feedback-msg');
+
+        // Items zurücklegen
+        items.forEach(item => {
+            item.classList.remove('correct-match', 'incorrect-match');
+            source.appendChild(item);
+        });
+
+        // Zonen resetten
+        zones.forEach(zone => {
+            zone.classList.remove('correct', 'incorrect');
+        });
+
+        feedback.textContent = "";
+        shuffleSource();
+    }
+
+    function solveTask() {
+        resetTask(); // Erst alles sauber machen
+        const source = document.querySelector('.source-container');
+        const zones = document.querySelectorAll('.dropzone');
+        const feedback = document.querySelector('.feedback-msg');
+
+        zones.forEach(zone => {
+            const matchId = zone.getAttribute('data-match');
+            const item = source.querySelector(`.draggable[data-id="${matchId}"]`);
+            if (item) {
+                zone.appendChild(item);
+                zone.classList.add('correct');
+                item.classList.add('correct-match');
+            }
+        });
+
+        feedback.textContent = "Lösung angezeigt.";
+        feedback.className = "feedback-msg text-success";
+    }
+
+</script>
+
+</body>
+</html>
