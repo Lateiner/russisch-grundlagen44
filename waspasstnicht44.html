@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch: Semantik (Kuckucksei)</title>
+    <style>
+        :root {
+            --primary: #3f51b5;
+            --primary-light: #e8eaf6;
+            --primary-dark: #303f9f;
+            --success: #4caf50;
+            --success-bg: #e8f5e9;
+            --error: #f44336;
+            --error-bg: #ffebee;
+            --text: #333;
+            --text-light: #666;
+            --bg-page: #f4f6f8;
+            --surface: #ffffff;
+            --border: #ddd;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            margin: 0;
+            padding: 15px;
+            background-color: var(--bg-page);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--surface);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        p.intro {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 30px;
+        }
+
+        /* --- Task Row Styling --- */
+        .task-row {
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            transition: box-shadow 0.3s;
+        }
+
+        .task-question {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--primary-dark);
+            font-size: 1.1rem;
+        }
+
+        /* Grid für die Optionen */
+        .options-grid {
+            display: grid;
+            gap: 10px;
+            /* Mobil: 1 Spalte, ab kleinen Tablets 2, ab Desktop 4 */
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        }
+
+        .option-btn {
+            background: #fafafa;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            padding: 15px 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            user-select: none;
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .option-btn:hover {
+            background-color: var(--primary-light);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        /* Feedback States */
+        .option-btn.correct {
+            background-color: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+        
+        .option-btn.wrong {
+            background-color: var(--error-bg);
+            color: var(--error);
+            border-color: var(--error);
+            opacity: 0.7;
+        }
+
+        /* Das richtige Wort (wenn Lösung angezeigt wird) */
+        .option-btn.solution {
+            background-color: var(--success-bg);
+            color: var(--success);
+            border-color: var(--success);
+            font-weight: bold;
+        }
+
+        /* Disabled State */
+        .options-grid.answered .option-btn {
+            pointer-events: none;
+        }
+
+        /* Explanation Box */
+        .explanation {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            display: none; 
+        }
+        .explanation.visible { display: block; }
+        .explanation.success { background-color: var(--success-bg); color: #2e7d32; border-left: 4px solid var(--success); }
+        .explanation.error { background-color: var(--error-bg); color: #c62828; border-left: 4px solid var(--error); }
+
+        /* --- Controls --- */
+        .controls {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px dashed var(--border);
+        }
+
+        button.ctrl-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        .btn-reset { background-color: #90a4ae; color: white; }
+        .btn-reset:hover { background-color: #78909c; }
+
+        .btn-solve { background-color: #ff9800; color: white; }
+        .btn-solve:hover { background-color: #f57c00; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Odd One Out (Das Kuckucksei)</h1>
+    <p class="intro">Welches Wort passt <u>nicht</u> in die Reihe? Achten Sie auf die Bedeutung.<br>Klicken Sie auf das "Kuckucksei".</p>
+
+    <!-- Aufgabe 1 -->
+    <div class="task-row" id="row-1">
+        <div class="task-question">1. Thema: Handel & Geld</div>
+        <div class="options-grid">
+            <div class="option-btn" onclick="checkAnswer(this, 1)">verkaufen</div>
+            <div class="option-btn" onclick="checkAnswer(this, 1)">bezahlen</div>
+            <div class="option-btn" onclick="checkAnswer(this, 1)" data-correct="true">предавать</div>
+            <div class="option-btn" onclick="checkAnswer(this, 1)">Kasse</div>
+        </div>
+        <div class="explanation" id="exp-1">
+            <strong>Richtig!</strong> <em>предавать</em> bedeutet „verraten“. Die anderen Wörter gehören zum Thema Einkaufen. (Verkaufen wäre <em>продавать</em>).
+        </div>
+    </div>
+
+    <!-- Aufgabe 2 -->
+    <div class="task-row" id="row-2">
+        <div class="task-question">2. Thema: Schule & Studium</div>
+        <div class="options-grid">
+            <div class="option-btn" onclick="checkAnswer(this, 2)">сдавать (экзамен)</div>
+            <div class="option-btn" onclick="checkAnswer(this, 2)">учить</div>
+            <div class="option-btn" onclick="checkAnswer(this, 2)" data-correct="true">продавать</div>
+            <div class="option-btn" onclick="checkAnswer(this, 2)">задавать (вопрос)</div>
+        </div>
+        <div class="explanation" id="exp-2">
+            <strong>Korrekt!</strong> <em>продавать</em> (verkaufen) passt nicht in die Schule. Die anderen sind: Prüfung ablegen, lernen, Frage stellen.
+        </div>
+    </div>
+
+    <!-- Aufgabe 3 -->
+    <div class="task-row" id="row-3">
+        <div class="task-question">3. Thema: Restaurant & Service</div>
+        <div class="options-grid">
+            <div class="option-btn" onclick="checkAnswer(this, 3)">Kellner</div>
+            <div class="option-btn" onclick="checkAnswer(this, 3)" data-correct="true">сдать</div>
+            <div class="option-btn" onclick="checkAnswer(this, 3)">Speisekarte</div>
+            <div class="option-btn" onclick="checkAnswer(this, 3)">подавать</div>
+        </div>
+        <div class="explanation" id="exp-3">
+            <strong>Genau!</strong> <em>сдать</em> bedeutet „abgeben/bestehen“. Im Restaurant benutzt man <em>подавать</em> (servieren).
+        </div>
+    </div>
+
+    <!-- Aufgabe 4 -->
+    <div class="task-row" id="row-4">
+        <div class="task-question">4. Thema: Rückgabe & Bibliothek</div>
+        <div class="options-grid">
+            <div class="option-btn" onclick="checkAnswer(this, 4)">Buch</div>
+            <div class="option-btn" onclick="checkAnswer(this, 4)">отдавать</div>
+            <div class="option-btn" onclick="checkAnswer(this, 4)">Bibliothek</div>
+            <div class="option-btn" onclick="checkAnswer(this, 4)" data-correct="true">выдавать</div>
+        </div>
+        <div class="explanation" id="exp-4">
+            <strong>Richtig!</strong> <em>отдавать</em> heißt „zurückgeben“. <em>выдавать</em> (aushändigen/ausgeben als) ist hier das Kuckucksei.
+        </div>
+    </div>
+
+    <!-- Aufgabe 5 -->
+    <div class="task-row" id="row-5">
+        <div class="task-question">5. Thema: Verrat & Geheimnisse</div>
+        <div class="options-grid">
+            <div class="option-btn" onclick="checkAnswer(this, 5)" data-correct="true">подавать</div>
+            <div class="option-btn" onclick="checkAnswer(this, 5)">предавать</div>
+            <div class="option-btn" onclick="checkAnswer(this, 5)">выдать</div>
+            <div class="option-btn" onclick="checkAnswer(this, 5)">Geheimnis</div>
+        </div>
+        <div class="explanation" id="exp-5">
+            <strong>Stimmt!</strong> <em>подавать</em> (servieren/reichen) ist positiv. Die anderen Wörter sind negativ besetzt (verraten, ausplaudern).
+        </div>
+    </div>
+
+    <!-- Aufgabe 6 (NEU) -->
+    <div class="task-row" id="row-6">
+        <div class="task-question">6. Thema: Kommunikation (Informationen)</div>
+        <div class="options-grid">
+            <div class="option-btn" onclick="checkAnswer(this, 6)">передавать (привет)</div>
+            <div class="option-btn" onclick="checkAnswer(this, 6)">сообщать</div>
+            <div class="option-btn" onclick="checkAnswer(this, 6)">рассказывать</div>
+            <div class="option-btn" onclick="checkAnswer(this, 6)" data-correct="true">продавать</div>
+        </div>
+        <div class="explanation" id="exp-6">
+            <strong>Richtig!</strong> <em>продавать</em> (verkaufen) ist eine kommerzielle Handlung. Die anderen Verben beschreiben den Austausch von Informationen oder Grüßen.
+        </div>
+    </div>
+
+    <!-- Aufgabe 7 (NEU) -->
+    <div class="task-row" id="row-7">
+        <div class="task-question">7. Thema: Erfolg & Gelingen</div>
+        <div class="options-grid">
+            <div class="option-btn" onclick="checkAnswer(this, 7)">удаваться</div>
+            <div class="option-btn" onclick="checkAnswer(this, 7)">получаться</div>
+            <div class="option-btn" onclick="checkAnswer(this, 7)">gelingen</div>
+            <div class="option-btn" onclick="checkAnswer(this, 7)" data-correct="true">задавать</div>
+        </div>
+        <div class="explanation" id="exp-7">
+            <strong>Genau!</strong> <em>задавать</em> (aufgeben/stellen) passt nicht. Die anderen Wörter beschreiben, dass etwas erfolgreich funktioniert (*удаваться/получаться*).
+        </div>
+    </div>
+
+    <!-- Aufgabe 8 (NEU) -->
+    <div class="task-row" id="row-8">
+        <div class="task-question">8. Thema: Erschaffen vs. Weggeben</div>
+        <div class="options-grid">
+            <div class="option-btn" onclick="checkAnswer(this, 8)">создавать</div>
+            <div class="option-btn" onclick="checkAnswer(this, 8)">строить</div>
+            <div class="option-btn" onclick="checkAnswer(this, 8)">делать</div>
+            <div class="option-btn" onclick="checkAnswer(this, 8)" data-correct="true">отдавать</div>
+        </div>
+        <div class="explanation" id="exp-8">
+            <strong>Korrekt!</strong> <em>отдавать</em> (weggeben/zurückgeben) bedeutet einen Verlust von etwas. Die anderen Verben bedeuten, etwas Neues zu kreieren (*создавать*).
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="ctrl-btn btn-reset" onclick="resetAll()">Zurücksetzen</button>
+        <button class="ctrl-btn btn-solve" onclick="solveAll()">Lösung anzeigen</button>
+    </div>
+
+</div>
+
+<script>
+    function checkAnswer(btnElement, rowId) {
+        const row = document.getElementById(`row-${rowId}`);
+        const grid = row.querySelector('.options-grid');
+        const explanation = document.getElementById(`exp-${rowId}`);
+
+        // Verhindert mehrfaches Klicken
+        if (grid.classList.contains('answered')) return;
+
+        grid.classList.add('answered');
+
+        const isCorrect = btnElement.getAttribute('data-correct') === 'true';
+
+        if (isCorrect) {
+            btnElement.classList.add('correct');
+            explanation.className = "explanation visible success";
+        } else {
+            btnElement.classList.add('wrong');
+            // Zeige auch das Richtige an
+            const buttons = grid.querySelectorAll('.option-btn');
+            buttons.forEach(btn => {
+                if (btn.getAttribute('data-correct') === 'true') {
+                    btn.classList.add('solution');
+                }
+            });
+            explanation.className = "explanation visible error";
+            // Hinweis anhängen, falls noch nicht vorhanden
+            if (!explanation.innerHTML.includes("Leider falsch")) {
+                const originalText = explanation.innerHTML;
+                explanation.innerHTML = "<strong>Leider falsch.</strong> Das markierte Wort wäre das Kuckucksei gewesen.<br><br>" + originalText;
+            }
+        }
+    }
+
+    function resetAll() {
+        location.reload(); 
+    }
+
+    function solveAll() {
+        document.querySelectorAll('.task-row').forEach(row => {
+            const grid = row.querySelector('.options-grid');
+            const explanation = row.querySelector('.explanation');
+            
+            // Wenn noch nicht beantwortet
+            if (!grid.classList.contains('answered')) {
+                grid.classList.add('answered');
+                const correctBtn = row.querySelector('.option-btn[data-correct="true"]');
+                if (correctBtn) {
+                    correctBtn.classList.add('solution');
+                }
+                explanation.className = "explanation visible success";
+            }
+        });
+    }
+
+    // Shuffle options on load
+    window.onload = function() {
+        document.querySelectorAll('.options-grid').forEach(grid => {
+            for (let i = grid.children.length; i >= 0; i--) {
+                grid.appendChild(grid.children[Math.random() * i | 0]);
+            }
+        });
+    };
+</script>
+
+</body>
+</html>
