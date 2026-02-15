@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch: Satzbaukasten mit Verb-Auswahl</title>
+    <!-- Polyfill für Touch-Support -->
+    <script src="https://cdn.jsdelivr.net/npm/drag-drop-touch@1.3.1/DragDropTouch.js"></script>
+    <style>
+        :root {
+            --primary: #3f51b5;
+            --primary-light: #e8eaf6;
+            --success: #4caf50;
+            --success-bg: #e8f5e9;
+            --error: #f44336;
+            --error-bg: #ffebee;
+            --text: #333;
+            --text-light: #555;
+            --bg-page: #f4f6f8;
+            --surface: #ffffff;
+            --border: #ddd;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            margin: 0;
+            padding: 15px;
+            background-color: var(--bg-page);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--surface);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        p.intro {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 30px;
+        }
+
+        /* --- Task Item Styles --- */
+        .task-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            transition: all 0.3s;
+            border-left: 5px solid var(--primary);
+        }
+
+        .task-header {
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .german-sentence {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            font-weight: 500;
+            padding-left: 5px;
+        }
+
+        /* Areas */
+        .area-label {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 5px;
+            display: block;
+            font-weight: 600;
+        }
+
+        /* Target Zone (Answer) */
+        .target-zone {
+            min-height: 55px;
+            background-color: #fafafa;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+            align-items: center;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+
+        .target-zone.correct {
+            border-color: var(--success);
+            background-color: var(--success-bg);
+            border-style: solid;
+        }
+
+        .target-zone.wrong {
+            border-color: var(--error);
+            background-color: var(--error-bg);
+            border-style: solid;
+        }
+
+        /* Source Zone (Word Bank) */
+        .source-zone {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: var(--primary-light);
+            border-radius: 8px;
+        }
+
+        /* Word Blocks */
+        .word-block {
+            background: white;
+            border: 1px solid #9fa8da;
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            user-select: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.1s, box-shadow 0.1s;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .word-block:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            background-color: #fff;
+            border-color: var(--primary);
+        }
+
+        .word-block:active {
+            transform: scale(0.95);
+        }
+
+        /* Feedback Text */
+        .feedback {
+            text-align: right;
+            font-weight: bold;
+            font-size: 0.95rem;
+            min-height: 24px;
+            margin-top: 10px;
+        }
+        .text-success { color: #2e7d32; }
+        .text-error { color: #c62828; }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        button.ctrl-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .btn-reset { background-color: #90a4ae; color: white; }
+        .btn-reset:hover { background-color: #78909c; }
+
+        .btn-solve { background-color: #ff9800; color: white; }
+        .btn-solve:hover { background-color: #f57c00; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Satzbau & Verb-Wahl</h1>
+    <p class="intro">
+        Bilden Sie den korrekten russischen Satz.<br>
+        <strong>Achtung:</strong> Im Wortspeicher gibt es ein falsches Verb (falscher Aspekt oder falsche Vorsilbe)!
+    </p>
+
+    <div id="tasks-wrapper">
+        <!-- Aufgaben werden hier generiert -->
+    </div>
+
+</div>
+
+<script>
+    // Daten für die 10 Sätze + Distraktor (das falsche Verb)
+    const sentences = [
+        {
+            de: "Ich stelle dir eine Frage.",
+            ru_parts: ["Я", "задаю", "тебе", "вопрос."],
+            distractor: "сдаю" // Falsches Präfix
+        },
+        {
+            de: "Der Student hat die schwierige Prüfung bestanden.",
+            ru_parts: ["Студент", "сдал", "трудный", "экзамен."],
+            distractor: "сдавал" // Falscher Aspekt (Prozess statt Resultat)
+        },
+        {
+            de: "Wir haben das alte Auto verkauft.",
+            ru_parts: ["Мы", "продали", "старую", "машину."],
+            distractor: "продавали" // Falscher Aspekt
+        },
+        {
+            de: "Bitte gib mein Buch zurück.",
+            ru_parts: ["Пожалуйста,", "отдай", "мою", "книгу."],
+            distractor: "выдай" // Falsches Präfix (aushändigen statt zurückgeben)
+        },
+        {
+            de: "Er hat Mama Grüße ausgerichtet.",
+            ru_parts: ["Он", "передал", "привет", "маме."],
+            distractor: "предал" // Ähnlicher Klang (verraten)
+        },
+        {
+            de: "Sie hat eine leckere Suppe serviert.",
+            ru_parts: ["Она", "подала", "вкусный", "суп."],
+            distractor: "поддала" // Ähnlicher Klang (Gas geben/kicken)
+        },
+        {
+            de: "Der Direktor hat uns das Gehalt ausgezahlt.",
+            ru_parts: ["Директор", "выдал", "нам", "зарплату."],
+            distractor: "задал" // Falsches Präfix
+        },
+        {
+            de: "Verrate deine Freunde nicht.",
+            ru_parts: ["Не", "предавай", "своих", "друзей."],
+            distractor: "передавай" // Ähnlicher Klang (übergeben)
+        },
+        {
+            de: "Der Lehrer teilt die Tests aus.",
+            ru_parts: ["Учитель", "раздаёт", "тесты."],
+            distractor: "сдаёт" // Falsches Präfix
+        },
+        {
+            de: "Ich stehe um sieben Uhr auf.",
+            ru_parts: ["Я", "встаю", "в", "семь", "часов."],
+            distractor: "устаю" // Ähnlicher Klang (müde werden)
+        }
+    ];
+
+    function init() {
+        const wrapper = document.getElementById('tasks-wrapper');
+        
+        sentences.forEach((item, index) => {
+            wrapper.appendChild(createTaskCard(item, index));
+        });
+    }
+
+    function createTaskCard(item, index) {
+        const card = document.createElement('div');
+        card.className = 'task-card';
+        card.id = `task-${index}`;
+
+        // Alle Wörter + Distraktor in einen Pool
+        let pool = [...item.ru_parts, item.distractor];
+        
+        // Wörter in Objekte umwandeln, um sie beim Mischen zu verfolgen
+        let wordsObjects = pool.map(word => ({ text: word }));
+        
+        // Mischen (Fisher-Yates)
+        for (let i = wordsObjects.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [wordsObjects[i], wordsObjects[j]] = [wordsObjects[j], wordsObjects[i]];
+        }
+
+        let sourceHTML = '';
+        wordsObjects.forEach(obj => {
+            sourceHTML += `<div class="word-block" onclick="moveWord(this, 'source', 'target', ${index})">${obj.text}</div>`;
+        });
+
+        card.innerHTML = `
+            <div class="task-header">Aufgabe ${index + 1}</div>
+            <div class="german-sentence">${item.de}</div>
+            
+            <span class="area-label">Ihre Übersetzung:</span>
+            <div class="target-zone" id="target-${index}" onclick="handleTargetClick(event, ${index})">
+                <!-- Wörter landen hier -->
+            </div>
+
+            <span class="area-label">Wortspeicher (ein Wort bleibt übrig):</span>
+            <div class="source-zone" id="source-${index}">
+                ${sourceHTML}
+            </div>
+
+            <div class="feedback" id="fb-${index}"></div>
+
+            <div class="controls">
+                <button class="ctrl-btn btn-reset" onclick="resetTask(${index})">Zurücksetzen</button>
+                <button class="ctrl-btn btn-solve" onclick="solveTask(${index})">Lösung</button>
+            </div>
+        `;
+
+        return card;
+    }
+
+    // Wort bewegen
+    window.moveWord = function(element, from, to, taskIndex) {
+        const targetZone = document.getElementById(`target-${taskIndex}`);
+        const sourceZone = document.getElementById(`source-${taskIndex}`);
+        
+        if(from === 'source') {
+            targetZone.appendChild(element);
+            element.setAttribute('onclick', ''); // Klick im Target wird durch Parent gehandhabt
+        } else {
+            sourceZone.appendChild(element);
+            element.setAttribute('onclick', `moveWord(this, 'source', 'target', ${taskIndex})`);
+        }
+
+        // Automatische Prüfung nach jedem Zug
+        checkTask(taskIndex);
+    };
+
+    // Event Delegation für Klicks in der Zielzone (zum Zurücklegen)
+    window.handleTargetClick = function(e, taskIndex) {
+        if(e.target.classList.contains('word-block')) {
+            moveWord(e.target, 'target', 'source', taskIndex);
+        }
+    }
+
+    window.checkTask = function(index) {
+        const targetZone = document.getElementById(`target-${index}`);
+        const feedback = document.getElementById(`fb-${index}`);
+        
+        // Aktuelle Wörter in der Zielzone abrufen
+        const currentWords = Array.from(targetZone.children).map(el => el.textContent.trim());
+        const correctWords = sentences[index].ru_parts;
+        const distractor = sentences[index].distractor;
+
+        // Styles zurücksetzen
+        targetZone.classList.remove('correct', 'wrong');
+
+        // 1. Wenn leer -> kein Feedback
+        if (currentWords.length === 0) {
+            feedback.textContent = "";
+            return;
+        }
+
+        // 2. Prüfen, ob das falsche Wort dabei ist
+        if (currentWords.includes(distractor)) {
+            targetZone.classList.add('wrong');
+            feedback.textContent = "Falsches Verb gewählt!";
+            feedback.className = "feedback text-error";
+            return;
+        }
+
+        // 3. Wenn die Länge stimmt (und kein Distraktor dabei ist), Reihenfolge prüfen
+        if (currentWords.length === correctWords.length) {
+            const isCorrect = JSON.stringify(currentWords) === JSON.stringify(correctWords);
+            
+            if (isCorrect) {
+                targetZone.classList.add('correct');
+                feedback.textContent = "Richtig!";
+                feedback.className = "feedback text-success";
+            } else {
+                targetZone.classList.add('wrong');
+                feedback.textContent = "Die Reihenfolge ist noch nicht richtig.";
+                feedback.className = "feedback text-error";
+            }
+        } else {
+            // Unvollständig
+            feedback.textContent = ""; 
+        }
+    };
+
+    window.resetTask = function(index) {
+        const sourceZone = document.getElementById(`source-${index}`);
+        const targetZone = document.getElementById(`target-${index}`);
+        
+        // Alle Wörter zurück in Source
+        Array.from(targetZone.children).forEach(child => {
+            sourceZone.appendChild(child);
+            child.setAttribute('onclick', `moveWord(this, 'source', 'target', ${index})`);
+        });
+
+        // Feedback reset
+        const feedback = document.getElementById(`fb-${index}`);
+        feedback.textContent = "";
+        targetZone.classList.remove('correct', 'wrong');
+
+        // Neu mischen
+        for (let i = sourceZone.children.length; i >= 0; i--) {
+            sourceZone.appendChild(sourceZone.children[Math.random() * i | 0]);
+        }
+    };
+
+    window.solveTask = function(index) {
+        // Erst resetten
+        resetTask(index);
+        
+        const sourceZone = document.getElementById(`source-${index}`);
+        const targetZone = document.getElementById(`target-${index}`);
+        const correctWords = sentences[index].ru_parts;
+
+        // Wörter in der richtigen Reihenfolge suchen und verschieben
+        correctWords.forEach(word => {
+            // Finde das Wort im Source (exakter Textvergleich)
+            const wordEl = Array.from(sourceZone.children).find(el => el.textContent === word);
+            if(wordEl) {
+                targetZone.appendChild(wordEl);
+                wordEl.setAttribute('onclick', '');
+            }
+        });
+
+        // Validierung triggern
+        checkTask(index);
+    };
+
+    // Start
+    init();
+
+</script>
+
+</body>
+</html>
