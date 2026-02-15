@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch: Lückentexte (Sofortiges Feedback)</title>
+    <style>
+        :root {
+            --primary: #3f51b5;
+            --primary-light: #e8eaf6;
+            --success: #4caf50;
+            --success-bg: #e8f5e9;
+            --error: #f44336;
+            --error-bg: #ffebee;
+            --text: #333;
+            --text-light: #555;
+            --bg-page: #f4f6f8;
+            --surface: #ffffff;
+            --border: #ddd;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.8;
+            color: var(--text);
+            margin: 0;
+            padding: 15px;
+            background-color: var(--bg-page);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--surface);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        p.intro {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 30px;
+        }
+
+        /* --- Story Card --- */
+        .story-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            border-left: 5px solid var(--primary);
+        }
+
+        .story-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 5px;
+        }
+
+        .cloze-text {
+            font-size: 1.1rem;
+            text-align: justify;
+        }
+
+        /* --- Dropdowns --- */
+        select.cloze-select {
+            appearance: none;
+            -webkit-appearance: none;
+            background-color: #fafafa;
+            border: 2px solid #bbb;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-family: inherit;
+            font-size: 1rem;
+            color: #333;
+            cursor: pointer;
+            margin: 0 3px;
+            font-weight: 600;
+            transition: all 0.2s;
+            /* Custom Arrow */
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px top 50%;
+            background-size: 10px auto;
+            padding-right: 25px;
+            max-width: 100%;
+        }
+
+        select.cloze-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.2);
+        }
+
+        /* Immediate Feedback Styles */
+        select.cloze-select.correct {
+            border-color: var(--success);
+            background-color: var(--success-bg);
+            color: #2e7d32;
+            /* Green Checkmark Icon via SVG */
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22%232e7d32%22%3E%3Cpath%20d%3D%22M9%2016.17L4.83%2012l-1.42%201.41L9%2019%2021%207l-1.41-1.41z%22%2F%3E%3C%2Fsvg%3E");
+            background-size: 16px;
+        }
+
+        select.cloze-select.wrong {
+            border-color: var(--error);
+            background-color: var(--error-bg);
+            color: #c62828;
+            /* Red X Icon via SVG */
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22%23c62828%22%3E%3Cpath%20d%3D%22M19%206.41L17.59%205%2012%2010.59%206.41%205%205%206.41%2010.59%2012%205%2017.59%206.41%2019%2012%2013.41%2017.59%2019%2019%2017.59%2013.41%2012z%22%2F%3E%3C%2Fsvg%3E");
+            background-size: 16px;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            margin-top: 15px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            text-align: right;
+            background-color: #f5f5f5;
+            color: #666;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .status-bar.completed {
+            background-color: var(--success-bg);
+            color: #2e7d32;
+            border: 1px solid var(--success);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed var(--border);
+        }
+
+        button.ctrl-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        .btn-reset { background-color: #90a4ae; color: white; }
+        .btn-reset:hover { background-color: #78909c; }
+
+        .btn-solve { background-color: #ff9800; color: white; }
+        .btn-solve:hover { background-color: #f57c00; }
+
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { padding: 15px; }
+            .story-card { padding: 15px; }
+            select.cloze-select { 
+                margin: 5px 2px; 
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Lückentexte: Kontext verstehen</h1>
+    <p class="intro">
+        Wählen Sie das passende Verb aus. Das Feedback erscheint sofort (Grün/Rot).<br>
+        Achten Sie auf <strong>Präfixe</strong> und <strong>Aspekte</strong>.
+    </p>
+
+    <!-- Text 1: Universität -->
+    <div class="story-card" id="text-1">
+        <div class="story-title">Text 1: Ein Tag an der Universität</div>
+        <div class="cloze-text">
+            Вчера был трудный день. Утром у нас был экзамен по истории. Я очень волновался, но я хорошо
+            <select class="cloze-select" data-correct="сдал" onchange="handleSelection(this)">
+                <option value="" disabled selected>---</option>
+                <option value="сдавал">сдавал (NSV)</option>
+                <option value="сдал">сдал (SV)</option>
+                <option value="дал">дал (SV)</option>
+            </select>
+            (bestanden) его. Потом я пошёл в библиотеку, чтобы
+            <select class="cloze-select" data-correct="сдать" onchange="handleSelection(this)">
+                <option value="" disabled selected>---</option>
+                <option value="дать">дать</option>
+                <option value="задать">задать</option>
+                <option value="сдать">сдать</option>
+            </select>
+            (zurückgeben) книги. 
+            Там я встретил Машу. Она просила
+            <select class="cloze-select" data-correct="передать" onchange="handleSelection(this)">
+                <option value="" disabled selected>---</option>
+                <option value="передать">передать</option>
+                <option value="предать">предать</option>
+                <option value="продать">продать</option>
+            </select>
+            (ausrichten) тебе привет. 
+            Вечером преподаватель
+            <select class="cloze-select" data-correct="задал" onchange="handleSelection(this)">
+                <option value="" disabled selected>---</option>
+                <option value="задавал">задавал</option>
+                <option value="задал">задал</option>
+                <option value="издал">издал</option>
+            </select>
+            (aufgegeben hat) нам много домашнего задания. Он всегда
+            <select class="cloze-select" data-correct="задаёт" onchange="handleSelection(this)">
+                <option value="" disabled selected>---</option>
+                <option value="сдаёт">сдаёт</option>
+                <option value="задаёт">задаёт</option>
+                <option value="даёт">даёт</option>
+            </select>
+            (stellt) трудные вопросы.
+        </div>
+        <div class="status-bar">Noch keine Auswahl.</div>
+        <div class="controls">
+            <button class="ctrl-btn btn-reset" onclick="resetText('text-1')">Zurücksetzen</button>
+            <button class="ctrl-btn btn-solve" onclick="solveText('text-1')">Lösung</button>
+        </div>
+    </div>
+
+    <!-- Text 2: Im Café -->
+    <div class="story-card" id="text-2">
+        <div class="story-title">Text 2: В кафе (Im Café)</div>
+        <div class="cloze-text">
+            Мы сидели в кафе. Официант долго не подходил. Наконец он
+            <select class="cloze-select" data-correct="подал" onchange="handleSelection(this)">
+                <option value="" disabled selected>---</option>
+                <option value="подал">подал (SV)</option>
+                <option value="подавал">подавал (NSV)</option>
+                <option value="поддал">поддал (SV)</option>
+            </select>
+            (servierte) нам меню. Я хотел суп, но официант сказал, что они уже
+            <select class="cloze-select" data-correct="продали" onchange="handleSelection(this)">
+                <option value="" disabled selected>---</option>
+                <option value="предали">предали</option>
+                <option value="сдали">сдали</option>
+                <option value="продали">продали</option>
+            </select>
+            (verkauft haben) весь суп. Жаль! 
+            Мой друг попросил: "Ты можешь
+            <select class="cloze-select" data-correct="передать" onchange="handleSelection(this)">
+                <option value="" disabled selected>---</option>
+                <option value="передать">передать</option>
+                <option value="сдать">сдать</option>
+                <option value="задать">задать</option>
+            </select>
+            (reichen) мне соль?" 
+            Когда мы уходили, официант
+            <select class="cloze-select" data-correct="недодал" onchange="handleSelection(this)">
+                <option value="" disabled selected>---</option>
+                <option value="недодал">недодал</option>
+                <option value="передал">передал</option>
+                <option value="отдал">отдал</option>
+            </select>
+            (hat zu wenig gegeben) нам сдачи. Но мы заметили это слишком поздно.
+        </div>
+        <div class="status-bar">Noch keine Auswahl.</div>
+        <div class="controls">
+            <button class="ctrl-btn btn-reset" onclick="resetText('text-2')">Zurücksetzen</button>
+            <button class="ctrl-btn btn-solve" onclick="solveText('text-2')">Lösung</button>
+        </div>
+    </div>
+
+    <!-- Text 3: Arbeit (NEU) -->
+    <div class="story-card" id="text-3">
+        <div class="story-title">Text 3: На работе (Bei der Arbeit)</div>
+        <div class="cloze-text">
+            Наша фирма
+            <select class="cloze-select" data-correct="продаёт" onchange="handleSelection(this)">
+                <option value="" disabled selected>---</option>
+                <option value="продаёт">продаёт (NSV)</option>
+                <option value="отдаёт">отдаёт (NSV)</option>
+                <option value="выдаёт">выдаёт (NSV)</option>
+            </select>
+            (verkauft) компьютеры. Вчера директор
+            <select class="cloze-select" data-correct="выдал" onchange="handleSelection(this)">
+                <option value="" disabled selected>---</option>
+                <option value="выдал">выдал</option>
+                <option value="задал">задал</option>
+                <option value="издал">издал</option>
+            </select>
+            (hat ausgehändigt/ausgegeben) нам зарплату. Я был очень рад.
+            Завтра я должен
+            <select class="cloze-select" data-correct="сдать" onchange="handleSelection(this)">
+                <option value="" disabled selected>---</option>
+                <option value="предать">предать</option>
+                <option value="сдать">сдать</option>
+                <option value="продать">продать</option>
+            </select>
+            (abgeben) важный отчёт. Мой коллега честный человек, он никогда не
+            <select class="cloze-select" data-correct="предаёт" onchange="handleSelection(this)">
+                <option value="" disabled selected>---</option>
+                <option value="предаёт">предаёт</option>
+                <option value="передаёт">передаёт</option>
+                <option value="подаёт">подаёт</option>
+            </select>
+            (verrät) секреты фирмы.
+        </div>
+        <div class="status-bar">Noch keine Auswahl.</div>
+        <div class="controls">
+            <button class="ctrl-btn btn-reset" onclick="resetText('text-3')">Zurücksetzen</button>
+            <button class="ctrl-btn btn-solve" onclick="solveText('text-3')">Lösung</button>
+        </div>
+    </div>
+
+    <!-- Text 4: Erfolg & Gefühle (NEU) -->
+    <div class="story-card" id="text-4">
+        <div class="story-title">Text 4: Успех и эмоции (Erfolg & Emotionen)</div>
+        <div class="cloze-text">
+            Анна любит моду. Она всегда
+            <select class="cloze-select" data-correct="придаёт" onchange="handleSelection(this)">
+                <option value="" disabled selected>---</option>
+                <option value="придаёт">придаёт (NSV)</option>
+                <option value="отдаёт">отдаёт (NSV)</option>
+                <option value="выдаёт">выдаёт (NSV)</option>
+            </select>
+            (misst bei/gibt) большое значение одежде. 
+            Вчера я хотел ей позвонить, но мне не
+            <select class="cloze-select" data-correct="удалось" onchange="handleSelection(this)">
+                <option value="" disabled selected>---</option>
+                <option value="сдалось">сдалось</option>
+                <option value="удалось">удалось</option>
+                <option value="раздалось">раздалось</option>
+            </select>
+            (gelang es nicht). Телефон не работал.
+            Мой друг сказал мне: "Не
+            <select class="cloze-select" data-correct="поддавайся" onchange="handleSelection(this)">
+                <option value="" disabled selected>---</option>
+                <option value="поддавайся">поддавайся</option>
+                <option value="продавайся">продавайся</option>
+                <option value="отдавайся">отдавайся</option>
+            </select>
+            (gib nicht nach/erliege nicht) панике!"
+            В конце концов Анна сама позвонила и
+            <select class="cloze-select" data-correct="отдала" onchange="handleSelection(this)">
+                <option value="" disabled selected>---</option>
+                <option value="задала">задала</option>
+                <option value="отдала">отдала</option>
+                <option value="создала">создала</option>
+            </select>
+            (gab zurück) мне мои деньги.
+        </div>
+        <div class="status-bar">Noch keine Auswahl.</div>
+        <div class="controls">
+            <button class="ctrl-btn btn-reset" onclick="resetText('text-4')">Zurücksetzen</button>
+            <button class="ctrl-btn btn-solve" onclick="solveText('text-4')">Lösung</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Hauptfunktion für sofortiges Feedback
+    function handleSelection(select) {
+        const correctValue = select.getAttribute('data-correct');
+        const card = select.closest('.story-card');
+        
+        // Klassen entfernen
+        select.classList.remove('correct', 'wrong');
+
+        // Check Value
+        if (select.value === correctValue) {
+            select.classList.add('correct');
+        } else {
+            select.classList.add('wrong');
+        }
+
+        // Status der Karte aktualisieren
+        updateCardStatus(card.id);
+    }
+
+    // Status-Text aktualisieren (z.B. "3 von 4 richtig")
+    function updateCardStatus(cardId) {
+        const card = document.getElementById(cardId);
+        const selects = card.querySelectorAll('select');
+        const statusBar = card.querySelector('.status-bar');
+        
+        let correctCount = 0;
+        let wrongCount = 0;
+        let answeredCount = 0;
+
+        selects.forEach(sel => {
+            if (sel.value && sel.value !== "") {
+                answeredCount++;
+                if (sel.value === sel.getAttribute('data-correct')) {
+                    correctCount++;
+                } else {
+                    wrongCount++;
+                }
+            }
+        });
+
+        // Text generieren
+        if (answeredCount === 0) {
+            statusBar.textContent = "Noch keine Auswahl.";
+            statusBar.className = "status-bar";
+        } else {
+            statusBar.textContent = `${correctCount} von ${selects.length} richtig.`;
+            
+            if (correctCount === selects.length) {
+                statusBar.className = "status-bar completed";
+                statusBar.textContent = "Perfekt! Alles richtig.";
+            } else {
+                statusBar.className = "status-bar";
+            }
+        }
+    }
+
+    // Zurücksetzen
+    function resetText(cardId) {
+        const card = document.getElementById(cardId);
+        const selects = card.querySelectorAll('select');
+        const statusBar = card.querySelector('.status-bar');
+
+        selects.forEach(select => {
+            select.selectedIndex = 0; // "---"
+            select.classList.remove('correct', 'wrong');
+            shuffleOptions(select); // Neu mischen
+        });
+
+        statusBar.textContent = "Noch keine Auswahl.";
+        statusBar.className = "status-bar";
+    }
+
+    // Lösung anzeigen
+    function solveText(cardId) {
+        const card = document.getElementById(cardId);
+        const selects = card.querySelectorAll('select');
+        const statusBar = card.querySelector('.status-bar');
+
+        selects.forEach(select => {
+            select.value = select.getAttribute('data-correct');
+            select.classList.remove('wrong');
+            select.classList.add('correct');
+        });
+
+        statusBar.textContent = "Lösungen angezeigt.";
+        statusBar.className = "status-bar completed";
+    }
+
+    // Optionen mischen (außer die erste)
+    function shuffleOptions(selectElement) {
+        const options = Array.from(selectElement.options);
+        const first = options.shift(); // Remove "---"
+        
+        // Fisher-Yates
+        for (let i = options.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [options[i], options[j]] = [options[j], options[i]];
+        }
+        
+        selectElement.innerHTML = "";
+        selectElement.appendChild(first);
+        options.forEach(opt => selectElement.appendChild(opt));
+    }
+
+    // Init: Einmal mischen beim Laden
+    window.onload = function() {
+        const allSelects = document.querySelectorAll('select');
+        allSelects.forEach(select => shuffleOptions(select));
+    };
+
+</script>
+
+</body>
+</html>
