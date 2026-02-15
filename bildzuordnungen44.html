@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch: Bild-Wort Zuordnung (Erweitert)</title>
+    <!-- Polyfill für Touch-Geräte -->
+    <script src="https://cdn.jsdelivr.net/npm/drag-drop-touch@1.3.1/DragDropTouch.js"></script>
+    <style>
+        :root {
+            --primary: #3f51b5;
+            --primary-light: #e8eaf6;
+            --success: #4caf50;
+            --success-bg: #e8f5e9;
+            --error: #f44336;
+            --error-bg: #ffebee;
+            --text: #333;
+            --border: #ddd;
+            --bg-page: #f0f2f5;
+            --surface: #ffffff;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.5;
+            color: var(--text);
+            margin: 0;
+            padding: 15px;
+            background-color: var(--bg-page);
+        }
+
+        .container {
+            max-width: 1000px; /* Etwas breiter für 3 Spalten */
+            margin: 0 auto;
+            background: var(--surface);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        p.intro {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        /* --- Source Container (Wortspeicher) --- */
+        .source-container {
+            background-color: var(--primary-light);
+            padding: 15px;
+            border-radius: 12px;
+            min-height: 70px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 30px;
+            border: 2px dashed #9fa8da;
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .draggable {
+            background: white;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: grab;
+            font-weight: 700;
+            font-size: 1.05rem;
+            user-select: none;
+            touch-action: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .draggable:active {
+            cursor: grabbing;
+            transform: scale(1.05);
+            box-shadow: 0 5px 12px rgba(0,0,0,0.2);
+        }
+
+        .draggable.correct-match { background-color: var(--success); color: white; border-color: var(--success); }
+        .draggable.incorrect-match { background-color: var(--error); color: white; border-color: var(--error); }
+
+        /* --- Picture Grid Layout --- */
+        .gallery-grid {
+            display: grid;
+            /* Passt sich automatisch an: Desktop 3 Spalten, Tablet 2, Handy 1 */
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .image-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+
+        .image-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .emoji-display {
+            font-size: 3.5rem;
+            margin-bottom: 5px;
+            line-height: 1;
+        }
+
+        .desc-text {
+            font-size: 0.9rem;
+            color: #555;
+            margin-bottom: 15px;
+            font-style: italic;
+            min-height: 40px; /* Damit alle Karten etwa gleich hoch sind */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dropzone {
+            width: 100%;
+            height: 50px;
+            background: #fafafa;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .dropzone.drag-over {
+            background-color: #e3f2fd;
+            border-color: var(--primary);
+            transform: scale(1.02);
+        }
+
+        .dropzone.correct { border-color: var(--success); background-color: var(--success-bg); border-style: solid; }
+        .dropzone.incorrect { border-color: var(--error); background-color: var(--error-bg); border-style: solid; }
+
+        /* --- Controls --- */
+        .controls {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px dashed var(--border);
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        .btn-reset { background-color: #90a4ae; color: white; }
+        .btn-reset:hover { background-color: #78909c; }
+
+        .btn-solve { background-color: #ff9800; color: white; }
+        .btn-solve:hover { background-color: #f57c00; }
+
+        .feedback-msg {
+            text-align: right;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .text-success { color: #2e7d32; }
+        .text-error { color: #c62828; }
+
+    </style>
+</head>
+<body>
+
+<div class="container" id="task-container">
+    <h1>Bild-Wort-Zuordnung</h1>
+    <p class="intro">Welches russische Verb passt zur Situation? Ziehen Sie das Wort auf das Bild.</p>
+
+    <!-- Der Wortspeicher -->
+    <div class="source-container shuffle-me">
+        <div class="draggable" draggable="true" data-id="verkaufen">продавать</div>
+        <div class="draggable" draggable="true" data-id="servieren">подавать</div>
+        <div class="draggable" draggable="true" data-id="abgeben">сдавать</div>
+        <div class="draggable" draggable="true" data-id="zurueck">отдавать</div>
+        <div class="draggable" draggable="true" data-id="aufgeben">задавать</div>
+        <div class="draggable" draggable="true" data-id="verraten">предавать</div>
+        
+        <!-- NEUE WÖRTER -->
+        <div class="draggable" draggable="true" data-id="aushaendigen">выдавать</div>
+        <div class="draggable" draggable="true" data-id="verteilen">раздавать</div>
+        <div class="draggable" draggable="true" data-id="reichen">передавать</div>
+    </div>
+
+    <!-- Das Bilder-Raster -->
+    <div class="gallery-grid">
+        
+        <!-- 1. verkaufen -->
+        <div class="image-card">
+            <div class="emoji-display">🤝🚗</div>
+            <div class="desc-text">Ein Auto gegen Geld tauschen</div>
+            <div class="dropzone" data-match="verkaufen"></div>
+        </div>
+
+        <!-- 2. servieren -->
+        <div class="image-card">
+            <div class="emoji-display">💁☕</div>
+            <div class="desc-text">Der Kellner bringt den Kaffee</div>
+            <div class="dropzone" data-match="servieren"></div>
+        </div>
+
+        <!-- 3. abgeben -->
+        <div class="image-card">
+            <div class="emoji-display">🎒➡🏫</div>
+            <div class="desc-text">Koffer (Gepäck) am Schalter lassen</div>
+            <div class="dropzone" data-match="abgeben"></div>
+        </div>
+
+        <!-- 4. zurückgeben -->
+        <div class="image-card">
+            <div class="emoji-display">🔙📚</div>
+            <div class="desc-text">Das Buch in die Bibliothek zurückbringen</div>
+            <div class="dropzone" data-match="zurueck"></div>
+        </div>
+
+        <!-- 5. aufgeben (Frage) -->
+        <div class="image-card">
+            <div class="emoji-display">👩‍🏫❓</div>
+            <div class="desc-text">Der Lehrer stellt eine Frage</div>
+            <div class="dropzone" data-match="aufgeben"></div>
+        </div>
+
+        <!-- 6. verraten -->
+        <div class="image-card">
+            <div class="emoji-display">🤫🗣️</div>
+            <div class="desc-text">Ein Geheimnis weitersagen (verraten)</div>
+            <div class="dropzone" data-match="verraten"></div>
+        </div>
+
+        <!-- NEU 7. aushändigen -->
+        <div class="image-card">
+            <div class="emoji-display">🎓📜</div>
+            <div class="desc-text">Ein Diplom offiziell aushändigen</div>
+            <div class="dropzone" data-match="aushaendigen"></div>
+        </div>
+
+        <!-- NEU 8. verteilen -->
+        <div class="image-card">
+            <div class="emoji-display">🃏♣️</div>
+            <div class="desc-text">Karten an Spieler verteilen</div>
+            <div class="dropzone" data-match="verteilen"></div>
+        </div>
+
+        <!-- NEU 9. reichen/weitergeben -->
+        <div class="image-card">
+            <div class="emoji-display">🧂🤲</div>
+            <div class="desc-text">Das Salz am Tisch weiterreichen</div>
+            <div class="dropzone" data-match="reichen"></div>
+        </div>
+
+    </div>
+
+    <div class="feedback-msg"></div>
+
+    <div class="controls">
+        <button class="btn-reset" onclick="resetTask()">Zurücksetzen</button>
+        <button class="btn-solve" onclick="solveTask()">Lösung anzeigen</button>
+    </div>
+</div>
+
+<script>
+    /* --- Initialisierung --- */
+    window.onload = function() {
+        shuffleSource();
+    };
+
+    function shuffleSource() {
+        const container = document.querySelector('.source-container');
+        for (let i = container.children.length; i >= 0; i--) {
+            container.appendChild(container.children[Math.random() * i | 0]);
+        }
+    }
+
+    /* --- Drag & Drop Logic --- */
+    let draggedItem = null;
+
+    // Draggable Events
+    document.querySelectorAll('.draggable').forEach(item => {
+        item.addEventListener('dragstart', function(e) {
+            draggedItem = this;
+            e.dataTransfer.effectAllowed = 'move';
+            this.style.opacity = '0.4';
+        });
+
+        item.addEventListener('dragend', function() {
+            draggedItem = null;
+            this.style.opacity = '1';
+        });
+    });
+
+    // Dropzone Events
+    document.querySelectorAll('.dropzone').forEach(zone => {
+        zone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            zone.classList.add('drag-over');
+        });
+
+        zone.addEventListener('dragleave', function() {
+            zone.classList.remove('drag-over');
+        });
+
+        zone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            zone.classList.remove('drag-over');
+
+            if (!draggedItem) return;
+
+            // Logik: Wenn schon was drin liegt, tauschen wir es aus (altes zurück)
+            if (zone.children.length > 0) {
+                const oldItem = zone.children[0];
+                const sourceContainer = document.querySelector('.source-container');
+                
+                // Reset Style des alten Items
+                oldItem.classList.remove('correct-match', 'incorrect-match');
+                sourceContainer.appendChild(oldItem);
+            }
+
+            // Neues Item ablegen
+            zone.appendChild(draggedItem);
+
+            // Prüfen
+            checkMatch(zone, draggedItem);
+            updateStatus();
+        });
+    });
+
+    function checkMatch(zone, item) {
+        const matchId = zone.getAttribute('data-match');
+        const itemId = item.getAttribute('data-id');
+
+        // Styles zurücksetzen
+        zone.classList.remove('correct', 'incorrect');
+        item.classList.remove('correct-match', 'incorrect-match');
+
+        if (matchId === itemId) {
+            zone.classList.add('correct');
+            item.classList.add('correct-match');
+        } else {
+            zone.classList.add('incorrect');
+            item.classList.add('incorrect-match');
+        }
+    }
+
+    function updateStatus() {
+        const container = document.getElementById('task-container');
+        const feedback = container.querySelector('.feedback-msg');
+        
+        const zones = container.querySelectorAll('.dropzone');
+        const correctZones = container.querySelectorAll('.dropzone.correct');
+        const incorrectZones = container.querySelectorAll('.dropzone.incorrect');
+
+        if (incorrectZones.length > 0) {
+            feedback.textContent = "Einige Zuordnungen sind noch falsch.";
+            feedback.className = "feedback-msg text-error";
+        } else if (correctZones.length === zones.length) {
+            feedback.textContent = "Fantastisch! Alle Bilder richtig zugeordnet.";
+            feedback.className = "feedback-msg text-success";
+        } else {
+            feedback.textContent = "";
+        }
+    }
+
+    /* --- Buttons --- */
+    function resetTask() {
+        const source = document.querySelector('.source-container');
+        const items = document.querySelectorAll('.draggable');
+        const zones = document.querySelectorAll('.dropzone');
+        const feedback = document.querySelector('.feedback-msg');
+
+        // Items zurücklegen
+        items.forEach(item => {
+            item.classList.remove('correct-match', 'incorrect-match');
+            source.appendChild(item);
+        });
+
+        // Zonen resetten
+        zones.forEach(zone => {
+            zone.classList.remove('correct', 'incorrect');
+        });
+
+        feedback.textContent = "";
+        shuffleSource();
+    }
+
+    function solveTask() {
+        resetTask(); // Erst alles sauber machen
+        const source = document.querySelector('.source-container');
+        const zones = document.querySelectorAll('.dropzone');
+        const feedback = document.querySelector('.feedback-msg');
+
+        zones.forEach(zone => {
+            const matchId = zone.getAttribute('data-match');
+            const item = source.querySelector(`.draggable[data-id="${matchId}"]`);
+            if (item) {
+                zone.appendChild(item);
+                zone.classList.add('correct');
+                item.classList.add('correct-match');
+            }
+        });
+
+        feedback.textContent = "Lösung angezeigt.";
+        feedback.className = "feedback-msg text-success";
+    }
+
+</script>
+
+</body>
+</html>
