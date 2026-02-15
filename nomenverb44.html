@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch: Kollokationen (Nomen zuordnen)</title>
+    <!-- Polyfill für Touch-Geräte -->
+    <script src="https://cdn.jsdelivr.net/npm/drag-drop-touch@1.3.1/DragDropTouch.js"></script>
+    <style>
+        :root {
+            --primary: #3f51b5;
+            --primary-light: #e8eaf6;
+            --primary-dark: #303f9f;
+            --secondary: #ff9800; /* Für den zweiten Korb */
+            --secondary-light: #fff3e0;
+            --success: #4caf50;
+            --success-bg: #e8f5e9;
+            --error: #f44336;
+            --error-bg: #ffebee;
+            --text: #333;
+            --bg-page: #f4f6f8;
+            --surface: #ffffff;
+            --border: #ddd;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            margin: 0;
+            padding: 15px;
+            background-color: var(--bg-page);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--surface);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        p.intro {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        /* --- Source Pool (Sticky) --- */
+        .source-container {
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 12px;
+            min-height: 80px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 30px;
+            border: 2px dashed #bbb;
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* Draggable Chips (Nouns) */
+        .draggable {
+            background: white;
+            border: 2px solid #555;
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: grab;
+            font-weight: 600;
+            font-size: 1rem;
+            user-select: none;
+            touch-action: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.1s, box-shadow 0.1s;
+            text-align: center;
+        }
+
+        .draggable span.small {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: normal;
+            color: #666;
+            font-style: italic;
+        }
+
+        .draggable:active {
+            cursor: grabbing;
+            transform: scale(1.05);
+            box-shadow: 0 5px 12px rgba(0,0,0,0.2);
+        }
+
+        .draggable.correct-match { background-color: var(--success); color: white; border-color: var(--success); }
+        .draggable.correct-match span.small { color: #e8f5e9; }
+        
+        .draggable.incorrect-match { background-color: var(--error); color: white; border-color: var(--error); }
+        .draggable.incorrect-match span.small { color: #ffebee; }
+
+        /* --- Buckets Container --- */
+        .buckets-wrapper {
+            display: flex;
+            gap: 20px;
+            /* Mobile: Spalten (untereinander), Desktop: Zeilen (nebeneinander) */
+            flex-direction: column; 
+        }
+
+        @media (min-width: 700px) {
+            .buckets-wrapper {
+                flex-direction: row;
+                align-items: stretch;
+            }
+        }
+
+        /* The Buckets */
+        .bucket {
+            flex: 1;
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            border: 2px solid transparent;
+            transition: background 0.2s;
+        }
+
+        /* Bucket A: SDAVAT */
+        .bucket-sdavat {
+            background-color: var(--primary-light);
+            border-color: var(--primary);
+        }
+        .bucket-sdavat h2 { color: var(--primary); margin-top: 0; text-align: center; border-bottom: 2px solid var(--primary); padding-bottom: 10px;}
+
+        /* Bucket B: ZADAVAT */
+        .bucket-zadavat {
+            background-color: var(--secondary-light);
+            border-color: var(--secondary);
+        }
+        .bucket-zadavat h2 { color: var(--secondary); margin-top: 0; text-align: center; border-bottom: 2px solid var(--secondary); padding-bottom: 10px;}
+
+        /* Dropzone inside bucket */
+        .bucket-dropzone {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.5);
+            border: 2px dashed rgba(0,0,0,0.1);
+        }
+
+        .bucket-dropzone.drag-over {
+            background-color: rgba(255,255,255,0.9);
+            border-color: #333;
+            transform: scale(1.01);
+        }
+
+        /* --- Controls --- */
+        .controls {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px dashed var(--border);
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        .btn-reset { background-color: #90a4ae; color: white; }
+        .btn-reset:hover { background-color: #78909c; }
+
+        .btn-solve { background-color: #ff9800; color: white; }
+        .btn-solve:hover { background-color: #f57c00; }
+
+        .feedback-msg {
+            text-align: right;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .text-success { color: #2e7d32; }
+        .text-error { color: #c62828; }
+
+    </style>
+</head>
+<body>
+
+<div class="container" id="task-container">
+    <h1>Kollokationen: Nomen zuordnen</h1>
+    <p class="intro">
+        Was passt zusammen? Ziehen Sie die Nomen in den richtigen Korb.<br>
+        Achten Sie auf die Bedeutung!
+    </p>
+
+    <!-- Wortspeicher -->
+    <div class="source-container shuffle-me">
+        <!-- ZADAVAT Items -->
+        <div class="draggable" draggable="true" data-match="zadavat">
+            вопрос
+            <span class="small">(eine Frage stellen)</span>
+        </div>
+        <div class="draggable" draggable="true" data-match="zadavat">
+            домашнее задание
+            <span class="small">(Hausaufgabe aufgeben)</span>
+        </div>
+        <div class="draggable" draggable="true" data-match="zadavat">
+            тон
+            <span class="small">(den Ton angeben)</span>
+        </div>
+        <div class="draggable" draggable="true" data-match="zadavat">
+            ритм
+            <span class="small">(den Rhythmus vorgeben)</span>
+        </div>
+        <div class="draggable" draggable="true" data-match="zadavat">
+            темп
+            <span class="small">(das Tempo vorgeben)</span>
+        </div>
+
+        <!-- SDAVAT Items -->
+        <div class="draggable" draggable="true" data-match="sdavat">
+            экзамен
+            <span class="small">(Prüfung ablegen/bestehen)</span>
+        </div>
+        <div class="draggable" draggable="true" data-match="sdavat">
+            багаж / чемодан
+            <span class="small">(Gepäck/Koffer aufgeben)</span>
+        </div>
+        <div class="draggable" draggable="true" data-match="sdavat">
+            книгу
+            <span class="small">(Buch zurückgeben)</span>
+        </div>
+        <div class="draggable" draggable="true" data-match="sdavat">
+            квартиру
+            <span class="small">(Wohnung vermieten)</span>
+        </div>
+        <div class="draggable" draggable="true" data-match="sdavat">
+            сдачу
+            <span class="small">(Wechselgeld herausgeben)</span>
+        </div>
+    </div>
+
+    <!-- Buckets Wrapper -->
+    <div class="buckets-wrapper">
+        
+        <!-- Korb 1: SDAVAT -->
+        <div class="bucket bucket-sdavat">
+            <h2>сдавать / сдать</h2>
+            <div class="bucket-dropzone" data-bucket="sdavat"></div>
+        </div>
+
+        <!-- Korb 2: ZADAVAT -->
+        <div class="bucket bucket-zadavat">
+            <h2>задавать / задать</h2>
+            <div class="bucket-dropzone" data-bucket="zadavat"></div>
+        </div>
+
+    </div>
+
+    <div class="feedback-msg"></div>
+
+    <div class="controls">
+        <button class="btn-reset" onclick="resetTask()">Zurücksetzen</button>
+        <button class="btn-solve" onclick="solveTask()">Lösung anzeigen</button>
+    </div>
+</div>
+
+<script>
+    /* --- Initialisierung --- */
+    window.onload = function() {
+        shuffleSource();
+    };
+
+    function shuffleSource() {
+        const container = document.querySelector('.source-container');
+        for (let i = container.children.length; i >= 0; i--) {
+            container.appendChild(container.children[Math.random() * i | 0]);
+        }
+    }
+
+    /* --- Drag & Drop Logic --- */
+    let draggedItem = null;
+
+    // Draggable Events
+    document.querySelectorAll('.draggable').forEach(item => {
+        item.addEventListener('dragstart', function(e) {
+            draggedItem = this;
+            e.dataTransfer.effectAllowed = 'move';
+            this.style.opacity = '0.4';
+        });
+
+        item.addEventListener('dragend', function() {
+            draggedItem = null;
+            this.style.opacity = '1';
+        });
+    });
+
+    // Bucket Dropzone Events
+    document.querySelectorAll('.bucket-dropzone').forEach(zone => {
+        zone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            zone.classList.add('drag-over');
+        });
+
+        zone.addEventListener('dragleave', function() {
+            zone.classList.remove('drag-over');
+        });
+
+        zone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            zone.classList.remove('drag-over');
+
+            if (!draggedItem) return;
+
+            // Item in den Korb legen
+            zone.appendChild(draggedItem);
+
+            // Prüfen
+            checkBucketMatch(zone, draggedItem);
+            updateStatus();
+        });
+    });
+
+    // Auch der Source-Container ist eine Dropzone (um Items zurückzulegen)
+    const sourceContainer = document.querySelector('.source-container');
+    sourceContainer.addEventListener('dragover', e => e.preventDefault());
+    sourceContainer.addEventListener('drop', e => {
+        e.preventDefault();
+        if (!draggedItem) return;
+        
+        // Reset Style
+        draggedItem.classList.remove('correct-match', 'incorrect-match');
+        sourceContainer.appendChild(draggedItem);
+        updateStatus();
+    });
+
+    function checkBucketMatch(zone, item) {
+        const bucketType = zone.getAttribute('data-bucket');
+        const itemType = item.getAttribute('data-match');
+
+        // Styles zurücksetzen
+        item.classList.remove('correct-match', 'incorrect-match');
+
+        if (bucketType === itemType) {
+            item.classList.add('correct-match');
+        } else {
+            item.classList.add('incorrect-match');
+        }
+    }
+
+    function updateStatus() {
+        const container = document.getElementById('task-container');
+        const feedback = container.querySelector('.feedback-msg');
+        const source = container.querySelector('.source-container');
+        
+        // Alle im Korb befindlichen Items prüfen
+        const itemsInBuckets = container.querySelectorAll('.bucket-dropzone .draggable');
+        const incorrectItems = container.querySelectorAll('.incorrect-match');
+        const totalItems = 10; // Wir haben 10 Items insgesamt
+
+        if (incorrectItems.length > 0) {
+            feedback.textContent = "Einige Zuordnungen sind falsch (rot).";
+            feedback.className = "feedback-msg text-error";
+        } else if (itemsInBuckets.length === totalItems && incorrectItems.length === 0) {
+            feedback.textContent = "Ausgezeichnet! Alle Kollokationen stimmen.";
+            feedback.className = "feedback-msg text-success";
+        } else {
+            feedback.textContent = "";
+        }
+    }
+
+    /* --- Buttons --- */
+    function resetTask() {
+        const source = document.querySelector('.source-container');
+        const items = document.querySelectorAll('.draggable');
+        const feedback = document.querySelector('.feedback-msg');
+
+        // Alle Items zurück in den Source Container
+        items.forEach(item => {
+            item.classList.remove('correct-match', 'incorrect-match');
+            source.appendChild(item);
+        });
+
+        feedback.textContent = "";
+        shuffleSource();
+    }
+
+    function solveTask() {
+        resetTask(); // Erst aufräumen
+        const source = document.querySelector('.source-container');
+        const zones = document.querySelectorAll('.bucket-dropzone');
+        const feedback = document.querySelector('.feedback-msg');
+
+        // Items verteilen
+        const items = Array.from(document.querySelectorAll('.draggable'));
+        
+        items.forEach(item => {
+            const matchType = item.getAttribute('data-match');
+            // Finde die passende Zone
+            const targetZone = document.querySelector(`.bucket-dropzone[data-bucket="${matchType}"]`);
+            
+            if (targetZone) {
+                targetZone.appendChild(item);
+                item.classList.add('correct-match');
+            }
+        });
+
+        feedback.textContent = "Lösung angezeigt.";
+        feedback.className = "feedback-msg text-success";
+    }
+
+</script>
+
+</body>
+</html>
